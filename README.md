@@ -5,7 +5,7 @@
 
 ## Git command step
 
-### 1 初始設定
+### 1. 初始設定
 Clone這個proj
 >git clone git@github.com:s095339/SOC_wlos_opt.git
 
@@ -26,6 +26,35 @@ Clone這個proj
 > git checkout [your branch name]
 
 這樣就可以開始自己的工作了，
+
+### 2. 流程
+在自己做的時候，commit message要盡量寫的詳細，內容包含：
+1.開頭：大致做了甚麼 add modify delte
+2.原因或問題
+3.做了甚麼修改
+例如
+```text=
+fix: 修改uart Fifo
+問題：fifo無法正確運作，韌體無法把資料傳下來
+原因：因為某某寫錯了
+修改：修改了FIFO的某個功能
+```
+
+當自己的feature寫好測試好之後，首先要把別人可能在develop branch上的改變先pull下來，看看自己已經可以動的code，跟別人的東西一起跑會不會動
+
+(在你自己的branch) 把遠端的develop pull下來
+>git pull origin develop
+>git checkout develop    // 順便切到develop把
+>git pull                // develop的最新變化pull下來 
+>git checkout [your branch]
+
+然後做測試。可能會有不能動的結果，修改到可以動後，把自己的修改給commit，然後切到develop，把自己的feature給合併到develop 並 push
+
+>git checkout develop
+>git pull 
+>git merge --no-ff [your branch]
+>git push
+
 
 
 ## Optimization
