@@ -43,18 +43,19 @@ fix: 修改uart Fifo
 當自己的feature寫好測試好之後，首先要把別人可能在develop branch上的改變先pull下來，看看自己已經可以動的code，跟別人的東西一起跑會不會動
 
 (在你自己的branch) 把遠端的develop pull下來
->git pull origin develop
->git checkout develop    // 順便切到develop把
->git pull                // develop的最新變化pull下來 
->git checkout [your branch]
-
+```
+git pull origin develop
+git checkout develop    // 順便切到develop把
+git pull                // develop的最新變化pull下來 
+git checkout [your branch]
+```
 然後做測試。可能會有不能動的結果，修改到可以動後，把自己的修改給commit，然後切到develop，把自己的feature給合併到develop 並 push
-
->git checkout develop
->git pull 
->git merge --no-ff [your branch]
->git push
-
+```
+git checkout develop
+git pull 
+git merge --no-ff [your branch]
+git push
+```
 
 
 ## Optimization
