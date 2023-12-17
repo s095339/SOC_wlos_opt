@@ -1,0 +1,24 @@
+*.vcd
+*.s
+*.o 
+*.i 
+*.out 
+*.map
+*.hex
+testbench/counter_la_fir/gdb.debug/
+testbench/counter_la_fir/gdbwave.debug/
+.vscode
+*.log
+
+
+vivado/vvd_caravel_fpga
+
+
+
+# ----- remove vivado project log files -----#
+vivado/NA
+vivado/.Xil
+vivado/timing_report.log
+vivado/vivado*.jou
+vivado/vivado*.log
+
