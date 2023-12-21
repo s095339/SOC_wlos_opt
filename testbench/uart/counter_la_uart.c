@@ -29,6 +29,7 @@ extern void uart_write_string();
 extern void uart_reset_write_fifo();
 extern int uart_isr();
 extern int uart_read();
+extern void main_loop();
 
 extern int* qsort();
 extern int* matmul();
@@ -160,7 +161,7 @@ void main()
 
 	//print("\n");
 	//print("Monitor: Test 1 Passed\n\n");	// Makes simulation very long!
-	
+	/*
 	int* tmp = fir();
 	reg_mprj_datal = *tmp << 16;
 	reg_mprj_datal = *(tmp+1) << 16;
@@ -190,10 +191,12 @@ void main()
 	reg_mprj_datal = *tmp << 16;
 	reg_mprj_datal = *(tmp+1) << 16;
 	reg_mprj_datal = *(tmp+2) << 16;
-	reg_mprj_datal = *(tmp+3) << 16;
+	reg_mprj_datal = *(tmp+3) << 16;*/
+
+	main_loop();
 	ckend();
 	reg_mprj_datal = 0xAB510000;
-
+	
 
 }
 

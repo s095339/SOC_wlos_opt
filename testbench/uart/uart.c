@@ -2,6 +2,12 @@
 #include <user_uart.h>
 #include <irq_vex.h>
 #include "header.h"
+
+
+void __attribute__ ((section(".mprj"))) interrupt_flag(){
+
+
+}
 void __attribute__ ( ( section ( ".mprj" ) ) ) uart_end()
 {
     endflag = 1;
@@ -151,4 +157,19 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) ckend(){
 	
 	while(endflag == 0);
 
+}
+
+void __attribute__ ( ( section ( ".mprjram" ) ) ) main_loop(){
+
+
+
+	//while(1){
+	
+	char c[20]= "ABCDEFGHIJKLMNOP";
+	uart_write_string(c);
+	
+
+	//}
+
+	
 }

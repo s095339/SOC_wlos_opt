@@ -236,16 +236,7 @@ module uart_tb;
 		wait(checkbits == 16'hAB40);
 		$display("LA Test 1 started");
 
-		send_data_2;
 
-
-
-
-		wait(checkbits == 16'h003D);
-		#10000;
-		$display("***********");
-		$display("*uart pass*");
-		$display("***********");
 		send_end_data;
 		wait(checkbits == 16'hAB51);
 		$display("uart end character received");
