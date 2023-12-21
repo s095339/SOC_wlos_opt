@@ -45,17 +45,33 @@ module uart #(
   assign user_irq = {2'b00,irq};	// Use USER_IRQ_0
 
   // CSR
+  
   wire [7:0] rx_data; 
   wire irq_en;
   wire rx_finish;
-  wire rx_busy;
+  wire rx_busy;/*
+  wire [7:0] tx_data;
+  wire tx_start_clear;
+  wire tx_start;
+  wire tx_busy;*/
+  wire wb_valid;
+  wire frame_err;
+  
+  // for tx ==================
+  // ctrl to fifo
+  wire [8-1:0]tx_fifo_data;
+  wire tx_fifo_start;
+  wire tx_fifo_start_clear;
+  wire tx_fifo_busy;
+  // fifo to tx
   wire [7:0] tx_data;
   wire tx_start_clear;
   wire tx_start;
   wire tx_busy;
-  wire wb_valid;
-  wire frame_err;
-  
+  // for rx ==================
+
+
+
   // 32'h3000_0000 memory regions of user project  
   assign wb_valid = (wbs_adr_i[31:8] == 32'h3000_00) ? wbs_cyc_i && wbs_stb_i : 1'b0;
 
@@ -85,6 +101,21 @@ module uart #(
     .busy       (tx_busy    )
   );
   
+tx_fifo txfifo(
+    .clk(wb_clk_i),
+    .rst_n(~wb_rst_i),
+    // uart_ctrl to tx_fifo
+    .din(tx_fifo_data),
+    .tx_ctrl_start(tx_fifo_start),
+    .tx_start_clear_ctrl(tx_fifo_start_clear),
+    .tx_ctrl_busy(tx_fifo_busy),
+    // tx_fifo to uart_tx
+    .tx_uart_data(tx_data),
+    .tx_uart_start(tx_start),
+    .tx_uart_clear_reg(tx_start_clear),
+    .tx_uart_busy(tx_busy)
+);
+
   ctrl ctrl(
 	.rst_n		(~wb_rst_i),
 	.clk		  (wb_clk_i	),
@@ -95,15 +126,17 @@ module uart #(
 	.i_wb_sel	(wbs_sel_i),
 	.o_wb_ack	(wbs_ack_o),
 	.o_wb_dat (wbs_dat_o),
+  //rx
 	.i_rx		  (rx_data	),
   .i_irq    (irq      ),
   .i_frame_err  (frame_err),
   .i_rx_busy    (rx_busy  ),
 	.o_rx_finish  (rx_finish),
-	.o_tx		      (tx_data	),
-	.i_tx_start_clear(tx_start_clear), 
-  .i_tx_busy    (tx_busy  ),
-	.o_tx_start	  (tx_start )
+  //tx
+	.o_tx		      (tx_fifo_data	),  //
+	.i_tx_start_clear(tx_fifo_start_clear), 
+  .i_tx_busy    (tx_fifo_busy  ),
+	.o_tx_start	  (tx_fifo_start)
   );
 
 endmodule
