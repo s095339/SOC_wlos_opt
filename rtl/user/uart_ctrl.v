@@ -42,6 +42,7 @@ reg [31:0] tx_buffer;
 reg [31:0] stat_reg;    
 reg tx_start_local;
 
+//更改stat_reg的內容
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         stat_reg <= 32'h0000_0005;
@@ -67,7 +68,7 @@ always@(posedge clk or negedge rst_n)begin
     end
 end
 
-
+//如果軟體是要來傳資料的
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n || i_tx_start_clear)begin
         tx_buffer <= 32'h00000000;
@@ -80,7 +81,7 @@ always@(posedge clk or negedge rst_n)begin
     end
 end
 
-
+//如果收到rx的data
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         rx_buffer <= 32'h00000000;
@@ -92,16 +93,17 @@ always@(posedge clk or negedge rst_n)begin
     end
 end
 
+//如果軟體是要來要資料的
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         o_wb_dat <= 32'h00000000;
     end else begin
         if(i_wb_valid && !i_wb_we)begin
             case(i_wb_adr)
-                RX_DATA:begin
+                RX_DATA:begin //如果軟體是要來要RX的
                     o_wb_dat <= rx_buffer;
                 end
-                STAT_REG:begin
+                STAT_REG:begin //如果軟體是要來要REG
                     o_wb_dat <= stat_reg;
                 end
                 default:begin 
@@ -112,11 +114,13 @@ always@(posedge clk or negedge rst_n)begin
     end
 end
 
+//如果軟體是要來要資料的
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         o_rx_finish <= 1'b0;
     end else begin
         if((i_wb_valid && i_wb_adr==RX_DATA && !i_wb_we && stat_reg[1:0]==2'b10) || i_frame_err)
+        //軟體要來要資料 或者frame_err
             o_rx_finish <= 1'b1;
         else 
             o_rx_finish <= 1'b0;

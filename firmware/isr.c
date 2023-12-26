@@ -37,8 +37,8 @@ void isr(void)
         buf = uart_read();
         if(buf == 0x0a)
             uart_end();
-        else
-            uart_write(buf);
+        //else
+        //    uart_write(buf);
 
     }
 #endif

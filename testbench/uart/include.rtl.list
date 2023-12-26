@@ -12,6 +12,8 @@
 ##-v ../../rtl/user/user_proj_example.counter.v
 -v ../../rtl/user/bram.v
 
+-v ../../rtl/user/tx_fifo.v
+-v ../../rtl/user/rx_fifo.v
 ## VIP
 -v ../../vip/tbuart.v
 -v ../../vip/spiflash.v
