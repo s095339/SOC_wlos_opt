@@ -42,20 +42,20 @@ module uart #(
 
   // irq
   wire irq;
-  assign user_irq = {2'b00,irq};	// Use USER_IRQ_0
+
 
   // CSR
-  
+  /*
   wire [7:0] rx_data; 
   wire irq_en;
   wire rx_finish;
-  wire rx_busy;/*
+  wire rx_busy;
   wire [7:0] tx_data;
   wire tx_start_clear;
   wire tx_start;
   wire tx_busy;*/
   wire wb_valid;
-  wire frame_err;
+  //wire frame_err;
   
   // for tx ==================
   // ctrl to fifo
@@ -69,9 +69,19 @@ module uart #(
   wire tx_start;
   wire tx_busy;
   // for rx ==================
-
-
-
+  wire [7:0]rx_fifo_data;
+  wire rx_fifo_rdvali;
+  wire rx_fifo_busy;
+  wire rx_fifo_finish;
+  //rx to fifo
+  wire [7:0] rx_data; 
+  wire irq_en;
+  wire rx_finish;
+  wire rx_busy;
+  wire frame_err;  
+  //rx interrupt
+  wire rx_irq;
+  assign user_irq = {2'b00,rx_irq};	// Use USER_IRQ_0
   // 32'h3000_0000 memory regions of user project  
   assign wb_valid = (wbs_adr_i[31:8] == 32'h3000_00) ? wbs_cyc_i && wbs_stb_i : 1'b0;
 
@@ -100,21 +110,37 @@ module uart #(
     .tx_start   (tx_start   ),
     .busy       (tx_busy    )
   );
-  
-tx_fifo txfifo(
+  rx_fifo  rxfifo(
     .clk(wb_clk_i),
     .rst_n(~wb_rst_i),
-    // uart_ctrl to tx_fifo
-    .din(tx_fifo_data),
-    .tx_ctrl_start(tx_fifo_start),
-    .tx_start_clear_ctrl(tx_fifo_start_clear),
-    .tx_ctrl_busy(tx_fifo_busy),
-    // tx_fifo to uart_tx
-    .tx_uart_data(tx_data),
-    .tx_uart_start(tx_start),
-    .tx_uart_clear_reg(tx_start_clear),
-    .tx_uart_busy(tx_busy)
-);
+    // rx_fifo to ctrl
+    .rx_ctrl_data(rx_fifo_data),
+    .read_valid(rx_fifo_rdvali),
+    .rx_ctrl_fullbusy(rx_fifo_busy),
+    .ctrl_rx_finish(rx_fifo_finish),
+    // rx to rx_fifo
+    .rx_finish(rx_finish),
+    .din(rx_data),
+    .rx_busy(rx_busy),
+    .wr_en(irq),
+    //interrupt
+    .fifo_interrupt(rx_irq)
+  );
+
+  tx_fifo txfifo(
+      .clk(wb_clk_i),
+      .rst_n(~wb_rst_i),
+      // uart_ctrl to tx_fifo
+      .din(tx_fifo_data),
+      .tx_ctrl_start(tx_fifo_start),
+      .tx_start_clear_ctrl(tx_fifo_start_clear),
+      .tx_ctrl_busy(tx_fifo_busy),
+      // tx_fifo to uart_tx
+      .tx_uart_data(tx_data),
+      .tx_uart_start(tx_start),
+      .tx_uart_clear_reg(tx_start_clear),
+      .tx_uart_busy(tx_busy)
+  );
 
   ctrl ctrl(
 	.rst_n		(~wb_rst_i),
@@ -127,11 +153,11 @@ tx_fifo txfifo(
 	.o_wb_ack	(wbs_ack_o),
 	.o_wb_dat (wbs_dat_o),
   //rx
-	.i_rx		  (rx_data	),
-  .i_irq    (irq      ),
+	.i_rx		  (rx_fifo_data),
+  .i_irq    (rx_fifo_rdvali),
   .i_frame_err  (frame_err),
-  .i_rx_busy    (rx_busy  ),
-	.o_rx_finish  (rx_finish),
+  .i_rx_busy    (rx_fifo_busy),
+	.o_rx_finish  (rx_fifo_finish),
   //tx
 	.o_tx		      (tx_fifo_data	),  //
 	.i_tx_start_clear(tx_fifo_start_clear), 

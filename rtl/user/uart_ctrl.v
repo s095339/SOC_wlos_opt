@@ -120,6 +120,7 @@ always@(posedge clk or negedge rst_n)begin
         o_rx_finish <= 1'b0;
     end else begin
         if((i_wb_valid && i_wb_adr==RX_DATA && !i_wb_we && stat_reg[1:0]==2'b10) || i_frame_err)
+        //軟體要來要資料 或者frame_err
             o_rx_finish <= 1'b1;
         else 
             o_rx_finish <= 1'b0;
