@@ -52,12 +52,14 @@ int __attribute__ ( ( section ( ".mprj" ) ) ) uart_read()
 {
     int num;
     if((((reg_uart_stat>>5) | 0) == 0) && (((reg_uart_stat>>4) | 0) == 0)){
-        for(int i = 0; i < 1; i++)
-            asm volatile ("nop");
+		while(((reg_uart_stat) & 0x00000002 ) == 0x00000002){
+			for(int i = 0; i < 1; i++)
+				asm volatile ("nop");
 
-        num = reg_rx_data;
+			num = reg_rx_data;
+		}
     }
-	(*(volatile uint32_t*)0x2600000c) = num << 16;
+	//(*(volatile uint32_t*)0x2600000c) = num << 16;
     return num;
 }
 

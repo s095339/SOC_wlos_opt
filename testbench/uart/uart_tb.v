@@ -174,7 +174,7 @@ module uart_tb;
 		#10000;
 		
 	end
-
+/*
 	//test FIR
 	initial begin
 
@@ -232,12 +232,20 @@ module uart_tb;
 		#10000;
 		
 	end
+*/
 	initial begin
 		wait(checkbits == 16'hAB40);
 		$display("LA Test 1 started");
-
-
-		send_end_data;
+		#200000 send_data_1;
+		#200000 send_data_2;
+		#200000 send_data_1;
+		#200000 send_data_2;
+		#200000 send_data_1;
+		#200000 send_data_2;
+		#200000 send_data_1;
+		#200000 send_data_2;
+		#200000 send_data_1;
+		#200000 send_end_data;
 		wait(checkbits == 16'hAB51);
 		$display("uart end character received");
 		$finish;		
