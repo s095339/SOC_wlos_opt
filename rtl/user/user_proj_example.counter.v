@@ -212,7 +212,7 @@ module user_proj_example #(
         .A0(wbs_adr_i)
     );
 */
-        sdram_controller user_sdram_controller (
+        sdr_controller user_sdram_controller (
         .clk(clk),
         .rst(rst),
         
