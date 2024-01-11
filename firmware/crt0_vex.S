@@ -70,6 +70,31 @@ sram_loop:
   add a2,a2,4
   j sram_loop
 sram_done:    
+// fir indata
+  la a0, _in_sram
+  la a1, _insram
+  la a2, _insram_rom
+insram_loop:
+  beq a0,a1,insram_done
+  lw a3,0(a2)
+  sw a3,0(a0)
+  add a0,a0,4
+  add a2,a2,4
+  j insram_loop
+insram_done:
+//fir outdata
+  la a0, _out_sram
+  la a1, _outsram
+  la a2, _outsram_rom
+outsram_loop:
+  beq a0,a1,outsram_done
+  lw a3,0(a2)
+  sw a3,0(a0)
+  add a0,a0,4
+  add a2,a2,4
+  j outsram_loop
+outsram_done:
+
 
 data_init:
   la a0, _fdata
