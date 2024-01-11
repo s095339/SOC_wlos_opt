@@ -14,7 +14,9 @@ MEMORY {
 	dff2 : ORIGIN = 0x00000400, LENGTH = 0x00000200
 	flash : ORIGIN = 0x10000000, LENGTH = 0x01000000
 	mprj : ORIGIN = 0x30000000, LENGTH = 0x00100000
-	mprjram : ORIGIN = 0x38000000, LENGTH = 0x00400000
+	mprjram : ORIGIN = 0x38000000, LENGTH = 0x00001000
+	indata : ORIGIN = 0x38001000, LENGTH = 0x00001000
+	outdata : ORIGIN = 0x38002000, LENGTH = 0x00001000
 	hk : ORIGIN = 0x26000000, LENGTH = 0x00100000
 	csr : ORIGIN = 0xf0000000, LENGTH = 0x00010000
 }
@@ -77,6 +79,20 @@ SECTIONS
 		_fsram = .;
 		*libgcc.a:*(.text .text.*)
 	} > mprjram AT > flash
+
+	.indata :
+	{
+		. = ALIGN(8);
+		_in_sram = .;
+		*libgcc.a:*(.text .text.*)
+	} > indata AT > flash
+
+	.outdata :
+	{
+		. = ALIGN(8);
+		_out_sram = .;
+		*libgcc.a:*(.text .text.*)
+	} > outdata AT > flash
 }
 
 PROVIDE(_fstack = ORIGIN(dff2) + LENGTH(dff2));
@@ -86,3 +102,9 @@ PROVIDE(_edata_rom = LOADADDR(.data) + SIZEOF(.data));
 
 PROVIDE(_esram = ORIGIN(mprjram) + SIZEOF(.mprjram));
 PROVIDE(_esram_rom = LOADADDR(.mprjram));
+
+PROVIDE(_insram = ORIGIN(indata) + SIZEOF(.indata));
+PROVIDE(_insram_rom = LOADADDR(.indata));
+
+PROVIDE(_outsram = ORIGIN(outdata) + SIZEOF(.outdata));
+PROVIDE(_outsram_rom = LOADADDR(.outdata));
