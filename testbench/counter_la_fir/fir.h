@@ -19,7 +19,7 @@
 #define NI 64
 volatile RCV_SDRAM_INDATA int inputsignal[NI]; 
 volatile RCV_SDRAM_OUTDATA int outputsignal[NI];
-
+int _outputsignal[NI];
 
 int taps[N] = {0,-10,-9,23,56,63,56,23,-9,-10,0};
 // fir mmio

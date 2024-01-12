@@ -139,24 +139,24 @@ assign decode = (wbs_adr_i >= 32'h38000000 && wbs_adr_i < 32'h38400000)? 2'b00:
                 (wbs_adr_i >= 32'h38000080 && wbs_adr_i < 32'h38400090)? 2'b10: 2'b11;
 
 // cpu to ram(arbiter)
-assign wbs_stb_i_ram_cpu = (decode == 2'b00)? wbs_stb_i : 32'd0;
-assign wbs_cyc_i_ram_cpu = (decode == 2'b00)? wbs_cyc_i : 32'd0;
-assign wbs_we_i_ram_cpu = (decode == 2'b00)? wbs_we_i : 32'd0;
-assign wbs_sel_i_ram_cpu = (decode == 2'b00)? wbs_sel_i : 32'd0;
+assign wbs_stb_i_ram_cpu = (decode == 2'b00)? wbs_stb_i : 1'd0;
+assign wbs_cyc_i_ram_cpu = (decode == 2'b00)? wbs_cyc_i : 1'd0;
+assign wbs_we_i_ram_cpu = (decode == 2'b00)? wbs_we_i : 4'd0;
+assign wbs_sel_i_ram_cpu = (decode == 2'b00)? wbs_sel_i : 1'd0;
 assign wbs_dat_i_ram_cpu = (decode == 2'b00)? wbs_dat_i : 32'd0;
 assign wbs_adr_i_ram_cpu = (decode == 2'b00)? wbs_adr_i : 32'd0;
 // cpu to fir
-assign wbs_stb_i_fir = (decode == 2'b01)? wbs_stb_i : 32'd0;
-assign wbs_cyc_i_fir = (decode == 2'b01)? wbs_cyc_i : 32'd0;
-assign wbs_we_i_fir = (decode == 2'b01)? wbs_we_i : 32'd0;
-assign wbs_sel_i_fir = (decode == 2'b01)? wbs_sel_i : 32'd0;
+assign wbs_stb_i_fir = (decode == 2'b01)? wbs_stb_i : 1'd0;
+assign wbs_cyc_i_fir = (decode == 2'b01)? wbs_cyc_i : 1'd0;
+assign wbs_we_i_fir = (decode == 2'b01)? wbs_we_i : 4'd0;
+assign wbs_sel_i_fir = (decode == 2'b01)? wbs_sel_i : 1'd0;
 assign wbs_dat_i_fir = (decode == 2'b01)? wbs_dat_i : 32'd0;
 assign wbs_adr_i_fir = (decode == 2'b01)? wbs_adr_i : 32'd0;
 // cpu to dma
-assign wbs_stb_i_dma = (decode == 2'b10)? wbs_stb_i : 32'd0;
-assign wbs_cyc_i_dma = (decode == 2'b10)? wbs_cyc_i : 32'd0;
-assign wbs_we_i_dma = (decode == 2'b10)? wbs_we_i : 32'd0;
-assign wbs_sel_i_dma = (decode == 2'b10)? wbs_sel_i : 32'd0;
+assign wbs_stb_i_dma = (decode == 2'b10)? wbs_stb_i : 1'd0;
+assign wbs_cyc_i_dma = (decode == 2'b10)? wbs_cyc_i : 1'd0;
+assign wbs_we_i_dma = (decode == 2'b10)? wbs_we_i : 4'd0;
+assign wbs_sel_i_dma = (decode == 2'b10)? wbs_sel_i : 1'd0;
 assign wbs_dat_i_dma = (decode == 2'b10)? wbs_dat_i : 32'd0;
 assign wbs_adr_i_dma = (decode == 2'b10)? wbs_adr_i : 32'd0;
 
@@ -180,6 +180,14 @@ assign wbs_dat_o =  (decode == 2'b00)? wbs_dat_o_ram_cpu:
 /*--------------------------------------*/
 /* arbiter                              */
 /*--------------------------------------*/
+
+assign wbs_stb_i_ram_dma = (decode == 2'b10)? wbs_stb_i : 1'd0;
+assign wbs_cyc_i_ram_dma = (decode == 2'b10)? wbs_cyc_i : 1'd0;
+assign wbs_we_i_ram_dma = (decode == 2'b10)? wbs_we_i : 4'd0;
+assign wbs_sel_i_ram_dma = (decode == 2'b10)? wbs_sel_i : 1'd0;
+assign wbs_dat_i_ram_dma = (decode == 2'b10)? wbs_dat_i : 32'd0;
+assign wbs_adr_i_ram_dma = (decode == 2'b10)? wbs_adr_i : 32'd0;
+
 arbiter sdram_arbiter(
     .wb_clk_i(wb_clk_i),
     .wb_rst_i(wb_rst_i),
