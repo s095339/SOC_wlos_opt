@@ -4,13 +4,14 @@
 //comment user bram and add sdram
 ## User project
 #-v ../../rtl/user/user_project_wrapper.v
-#-v ../../rtl/user/user_proj_example.counter.v
+#-v ../../rtl/user/system_ram.v
 #-v ../../rtl/user/bram.v
 ## User project
 -v ../../rtl/user/user_project_wrapper.v
--v ../../rtl/user/user_proj_example.counter.v
+-v ../../rtl/user/system_ram.v
 -v ../../rtl/user/sdr_controller.v
 -v ../../rtl/user/sdr.v
+-v ../../rtl/user/arbiter.v
 ## VIP
 -v ../../vip/tbuart.v
 -v ../../vip/spiflash.v
