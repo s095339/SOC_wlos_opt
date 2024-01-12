@@ -77,12 +77,146 @@ module user_project_wrapper #(
     // User maskable interrupt signals
     output [2:0] user_irq
 );
+//system_ram==========================
+// cpu to sdram arbiter
+wire wbs_stb_i_ram_cpu;
+wire wbs_cyc_i_ram_cpu;
+wire wbs_we_i_ram_cpu;
+wire [3:0] wbs_sel_i_ram_cpu;
+wire [31:0] wbs_dat_i_ram_cpu;
+wire [31:0] wbs_adr_i_ram_cpu;
+wire wbs_ack_o_ram_cpu;
+wire [31:0] wbs_dat_o_ram_cpu;
+//dma to sdram arbiter
+wire wbs_stb_i_ram_dma;
+wire wbs_cyc_i_ram_dma;
+wire wbs_we_i_ram_dma;
+wire [3:0] wbs_sel_i_ram_dma;
+wire [31:0] wbs_dat_i_ram_dma;
+wire [31:0] wbs_adr_i_ram_dma;
+wire wbs_ack_o_ram_dma;
+wire [31:0] wbs_dat_o_ram_dma;
+// sdram arbiter to sdram
+wire wbs_stb_i_ram;
+wire wbs_cyc_i_ram;
+wire wbs_we_i_ram;
+wire [3:0] wbs_sel_i_ram;
+wire [31:0] wbs_dat_i_ram;
+wire [31:0] wbs_adr_i_ram;
+wire wbs_ack_o_ram;
+wire [31:0] wbs_dat_o_ram;
+//fir===================================
+// 傳axilite的
+wire wbs_stb_i_fir;
+wire wbs_cyc_i_fir;
+wire wbs_we_i_fir;
+wire [3:0] wbs_sel_i_fir;
+wire [31:0] wbs_dat_i_fir;
+wire [31:0] wbs_adr_i_fir;
+wire wbs_ack_o_fir;
+wire [31:0] wbs_dat_o_fir;
+
+//dma===================================
+//cpu to dma
+//傳start_addr length save_addr的
+wire wbs_stb_i_dma;
+wire wbs_cyc_i_dma;
+wire wbs_we_i_dma;
+wire [3:0] wbs_sel_i_dma;
+wire [31:0] wbs_dat_i_dma;
+wire [31:0] wbs_adr_i_dma;
+wire wbs_ack_o_dma;
+wire [31:0] wbs_dat_o_dma;
+//decoder
+wire [1:0] decode; // 00 cpu2ram 01 cpu2fir 10 cpu2dma
+
+//TODO 可能還會需要宣告一些訊號 axilite axistream之類的\
+/*--------------------------------------*/
+/* Decoder                              */
+/*--------------------------------------*/
+assign decode = (wbs_adr_i >= 32'h38000000 && wbs_adr_i < 32'h38400000)? 2'b00:
+                (wbs_adr_i >= 32'h30000000 && wbs_adr_i < 32'h30000080)? 2'b01:
+                (wbs_adr_i >= 32'h38000080 && wbs_adr_i < 32'h38400090)? 2'b10: 2'b11;
+
+// cpu to ram(arbiter)
+assign wbs_stb_i_ram_cpu = (decode == 2'b00)? wbs_stb_i : 32'd0;
+assign wbs_cyc_i_ram_cpu = (decode == 2'b00)? wbs_cyc_i : 32'd0;
+assign wbs_we_i_ram_cpu = (decode == 2'b00)? wbs_we_i : 32'd0;
+assign wbs_sel_i_ram_cpu = (decode == 2'b00)? wbs_sel_i : 32'd0;
+assign wbs_dat_i_ram_cpu = (decode == 2'b00)? wbs_dat_i : 32'd0;
+assign wbs_adr_i_ram_cpu = (decode == 2'b00)? wbs_adr_i : 32'd0;
+// cpu to fir
+assign wbs_stb_i_fir = (decode == 2'b01)? wbs_stb_i : 32'd0;
+assign wbs_cyc_i_fir = (decode == 2'b01)? wbs_cyc_i : 32'd0;
+assign wbs_we_i_fir = (decode == 2'b01)? wbs_we_i : 32'd0;
+assign wbs_sel_i_fir = (decode == 2'b01)? wbs_sel_i : 32'd0;
+assign wbs_dat_i_fir = (decode == 2'b01)? wbs_dat_i : 32'd0;
+assign wbs_adr_i_fir = (decode == 2'b01)? wbs_adr_i : 32'd0;
+// cpu to dma
+assign wbs_stb_i_dma = (decode == 2'b10)? wbs_stb_i : 32'd0;
+assign wbs_cyc_i_dma = (decode == 2'b10)? wbs_cyc_i : 32'd0;
+assign wbs_we_i_dma = (decode == 2'b10)? wbs_we_i : 32'd0;
+assign wbs_sel_i_dma = (decode == 2'b10)? wbs_sel_i : 32'd0;
+assign wbs_dat_i_dma = (decode == 2'b10)? wbs_dat_i : 32'd0;
+assign wbs_adr_i_dma = (decode == 2'b10)? wbs_adr_i : 32'd0;
+
+assign wbs_ack_o =  (decode == 2'b00)? wbs_ack_o_ram_cpu:
+                    (decode == 2'b01)? wbs_ack_o_fir:
+                    (decode == 2'b10)? wbs_ack_o_dma: 32'h0;
+assign wbs_dat_o =  (decode == 2'b00)? wbs_dat_o_ram_cpu:
+                    (decode == 2'b01)? wbs_dat_o_fir:
+                    (decode == 2'b10)? wbs_dat_o_dma: 32'h0;
+
 
 /*--------------------------------------*/
-/* User project is instantiated  here   */
+/* FIR                                  */
 /*--------------------------------------*/
+//TODO 把FIR 跟axilite那些寫進來
+/*--------------------------------------*/
+/* DMA                                  */
+/*--------------------------------------*/
+//TODO 把DMA寫近來
 
-user_proj_example mprj (
+/*--------------------------------------*/
+/* arbiter                              */
+/*--------------------------------------*/
+arbiter sdram_arbiter(
+    .wb_clk_i(wb_clk_i),
+    .wb_rst_i(wb_rst_i),
+
+    .wbs_stb_i_ram_cpu(wbs_stb_i_ram_cpu),
+    .wbs_cyc_i_ram_cpu(wbs_cyc_i_ram_cpu),
+    .wbs_we_i_ram_cpu(wbs_we_i_ram_cpu),
+    .wbs_sel_i_ram_cpu(wbs_sel_i_ram_cpu),
+    .wbs_dat_i_ram_cpu(wbs_dat_i_ram_cpu),
+    .wbs_adr_i_ram_cpu(wbs_adr_i_ram_cpu),
+    .wbs_ack_o_ram_cpu(wbs_ack_o_ram_cpu),
+    .wbs_dat_o_ram_cpu(wbs_dat_o_ram_cpu),
+
+    .wbs_stb_i_ram_dma(wbs_stb_i_ram_dma),
+    .wbs_cyc_i_ram_dma(wbs_cyc_i_ram_dma),
+    .wbs_we_i_ram_dma(wbs_we_i_ram_dma),
+    .wbs_sel_i_ram_dma(wbs_sel_i_ram_dma),
+    .wbs_dat_i_ram_dma(wbs_dat_i_ram_dma),
+    .wbs_adr_i_ram_dma(wbs_adr_i_ram_dma),
+    .wbs_ack_o_ram_dma(wbs_ack_o_ram_dma),
+    .wbs_dat_o_ram_dma(wbs_dat_o_ram_dma),
+
+    .wbs_stb_o_ram(wbs_stb_i_ram),
+    .wbs_cyc_o_ram(wbs_cyc_i_ram),
+    .wbs_we_o_ram(wbs_we_i_ram),
+    .wbs_sel_o_ram(wbs_sel_i_ram),
+    .wbs_dat_o_ram(wbs_dat_i_ram),
+    .wbs_adr_o_ram(wbs_adr_i_ram),
+    .wbs_ack_i_ram(wbs_ack_o_ram),
+    .wbs_dat_i_ram(wbs_dat_o_ram)
+);
+
+/*--------------------------------------*/
+/* System_ram                           */
+/*--------------------------------------*/
+//sdram
+system_ram mprj (
 `ifdef USE_POWER_PINS
 	.vccd1(vccd1),	// User area 1 1.8V power
 	.vssd1(vssd1),	// User area 1 digital ground
@@ -93,14 +227,14 @@ user_proj_example mprj (
 
     // MGMT SoC Wishbone Slave
 
-    .wbs_cyc_i(wbs_cyc_i),
-    .wbs_stb_i(wbs_stb_i),
-    .wbs_we_i(wbs_we_i),
-    .wbs_sel_i(wbs_sel_i),
-    .wbs_adr_i(wbs_adr_i),
-    .wbs_dat_i(wbs_dat_i),
-    .wbs_ack_o(wbs_ack_o),
-    .wbs_dat_o(wbs_dat_o),
+    .wbs_cyc_i(wbs_cyc_i_ram),
+    .wbs_stb_i(wbs_stb_i_ram),
+    .wbs_we_i(wbs_we_i_ram),
+    .wbs_sel_i(wbs_sel_i_ram),
+    .wbs_adr_i(wbs_adr_i_ram),
+    .wbs_dat_i(wbs_dat_i_ram),
+    .wbs_ack_o(wbs_ack_o_ram),
+    .wbs_dat_o(wbs_dat_o_ram),
 
     // Logic Analyzer
 
