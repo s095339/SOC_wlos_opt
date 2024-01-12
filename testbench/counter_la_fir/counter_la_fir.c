@@ -19,7 +19,7 @@
 #include <defs.h>
 #include <stub.c>
 
-extern int main_func();
+extern int* main_func();
 // --------------------------------------------------------
 
 /*
@@ -126,8 +126,9 @@ void main()
 		}
 	}
 */	
-	main_func();
-		
+	int* tmp = main_func();
+	
+	reg_mprj_datal = tmp[56] << 16;
 
 	//print("\n");
 	//print("Monitor: Test 1 Passed\n\n");	// Makes simulation very long!
