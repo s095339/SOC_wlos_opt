@@ -136,7 +136,7 @@ wire [1:0] decode; // 00 cpu2ram 01 cpu2fir 10 cpu2dma
 /*--------------------------------------*/
 assign decode = (wbs_adr_i >= 32'h38000000 && wbs_adr_i < 32'h38400000)? 2'b00:
                 (wbs_adr_i >= 32'h30000000 && wbs_adr_i < 32'h30000080)? 2'b01:
-                (wbs_adr_i >= 32'h38000080 && wbs_adr_i < 32'h38400090)? 2'b10: 2'b11;
+                (wbs_adr_i >= 32'h30000080 && wbs_adr_i < 32'h30000090)? 2'b10: 2'b11;
 
 // cpu to ram(arbiter)
 assign wbs_stb_i_ram_cpu = (decode == 2'b00)? wbs_stb_i : 1'd0;
@@ -181,12 +181,12 @@ assign wbs_dat_o =  (decode == 2'b00)? wbs_dat_o_ram_cpu:
 /* arbiter                              */
 /*--------------------------------------*/
 
-assign wbs_stb_i_ram_dma = (decode == 2'b10)? wbs_stb_i : 1'd0;
-assign wbs_cyc_i_ram_dma = (decode == 2'b10)? wbs_cyc_i : 1'd0;
-assign wbs_we_i_ram_dma = (decode == 2'b10)? wbs_we_i : 4'd0;
-assign wbs_sel_i_ram_dma = (decode == 2'b10)? wbs_sel_i : 1'd0;
-assign wbs_dat_i_ram_dma = (decode == 2'b10)? wbs_dat_i : 32'd0;
-assign wbs_adr_i_ram_dma = (decode == 2'b10)? wbs_adr_i : 32'd0;
+//assign wbs_stb_i_ram_dma = (decode == 2'b10)? wbs_stb_i : 1'd0;
+//assign wbs_cyc_i_ram_dma = (decode == 2'b10)? wbs_cyc_i : 1'd0;
+//assign wbs_we_i_ram_dma = (decode == 2'b10)? wbs_we_i : 4'd0;
+//assign wbs_sel_i_ram_dma = (decode == 2'b10)? wbs_sel_i : 1'd0;
+//assign wbs_dat_i_ram_dma = (decode == 2'b10)? wbs_dat_i : 32'd0;
+//assign wbs_adr_i_ram_dma = (decode == 2'b10)? wbs_adr_i : 32'd0;
 
 arbiter sdram_arbiter(
     .wb_clk_i(wb_clk_i),
@@ -259,7 +259,30 @@ system_ram mprj (
     // IRQ
     .irq(user_irq)
 );
+dma DMA(
+    // CPU <====> DMA
+    .clk(wb_clk_i),
+    .rst(~wb_rst_i),
+    .cpu2d_stb_i(wbs_stb_i_dma),
+    .cpu2d_cyc_i(wbs_cyc_i_dma),
+    .cpu2d_we_i(wbs_we_i_dma),
+    .cpu2d_sel_i(wbs_sel_i_dma),
+    .cpu2d_dat_i(wbs_dat_i_dma),
+    .cpu2d_adr_i(wbs_adr_i_dma),
 
+    .d2cpu_ack_o(wbs_ack_o_dma),
+    .d2cpu_dat_o(wbs_dat_o_dma),
+    // DMA <====> SDRAM
+    .d2srm_stb_o(wbs_stb_i_ram_dma),
+    .d2srm_cyc_o(wbs_cyc_i_ram_dma),
+    .d2srm_we_o(wbs_we_i_ram_dma),
+    .d2srm_sel_o(wbs_sel_i_ram_dma),
+    .d2srm_dat_o(wbs_dat_i_ram_dma),
+    .d2srm_adr_o(wbs_adr_i_ram_dma),
+
+    .srm2d_ack_i(wbs_ack_o_ram_dma),
+    .srm2d_dat_i(wbs_dat_o_ram_dma)
+);
 endmodule	// user_project_wrapper
 
 `default_nettype wire
