@@ -82,7 +82,7 @@ always@*
                 arb1_next_state = ARB1_CPU;
         ARB1_DMA:
             if(wbs_ack_o)
-                arb1_next_state = ARB1_INIT;
+                arb1_next_state = ARB1_ARB;
             else
                 arb1_next_state = ARB1_DMA;
         ARB1_INIT:
@@ -116,22 +116,22 @@ always@(posedge wb_clk_i or posedge wb_rst_i)
 
 //--- decode ---//
 assign wbs_stb_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_stb_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA )?wbs_stb_i_ram_dma:0 ; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA )?wbs_stb_i_ram_dma:1'd0 ; 
 
 assign wbs_cyc_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_cyc_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_cyc_i_ram_dma:0; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_cyc_i_ram_dma:1'd0; 
 
 assign wbs_we_i =   (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_we_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_we_i_ram_dma:0; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_we_i_ram_dma:1'd0; 
 
 assign wbs_sel_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_sel_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_sel_i_ram_dma:0; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_sel_i_ram_dma:4'd0; 
 
 assign wbs_dat_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_dat_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_dat_i_ram_dma:0; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_dat_i_ram_dma:32'd0; 
 
 assign wbs_adr_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_adr_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_adr_i_ram_dma:0; 
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_adr_i_ram_dma:32'd0; 
 
 assign wbs_ack_o_ram_cpu =  (arb1_state == ARB1_CPU)?wbs_ack_o:1'b0;
 assign wbs_ack_o_ram_dma =  (arb1_state == ARB1_DMA)?wbs_ack_o:1'b0;
