@@ -115,7 +115,47 @@ wire [31:0] wbs_dat_i_fir;
 wire [31:0] wbs_adr_i_fir;
 wire wbs_ack_o_fir;
 wire [31:0] wbs_dat_o_fir;
+// axilite
+wire                     awready;
+wire                     wready;
+wire                     awvalid;
+wire [11:0] awaddr;
+wire                     wvalid;
+wire [31:0] wdata;
+//read(output)---
+wire                     arready;
+wire                     rready;
+wire                     arvalid;
+wire [11:0] araddr;
+wire                     rvalid;
+wire [31:0] rdata;
 
+//axisin---
+wire                     ss_tvalid;
+wire [31:0] ss_tdata;
+wire                     ss_tlast; 
+wire                     ss_tready; 
+//axisout---
+wire                     sm_tready; 
+wire                     sm_tvalid; 
+wire [31:0] sm_tdata;
+wire                     sm_tlast; 
+
+
+//bram
+// ram for tap
+wire [3:0]               tap_WE;
+wire                     tap_EN;
+wire [31:0] tap_Di;
+wire [11:0] tap_A;
+wire [31:0] tap_Do;
+
+// ram for data RAM
+wire [3:0]               data_WE;
+wire                     data_EN;
+wire [31:0] data_Di;
+wire [11:0] data_A;
+wire [31:0] data_Do;
 //dma===================================
 //cpu to dma
 //傳start_addr length save_addr的
@@ -175,7 +215,7 @@ assign wbs_dat_o =  (decode == 2'b00)? wbs_dat_o_ram_cpu:
 /*--------------------------------------*/
 /* DMA                                  */
 /*--------------------------------------*/
-//TODO 把DMA寫近來
+//TODO 把DMA寫進來
 
 /*--------------------------------------*/
 /* arbiter                              */
@@ -281,7 +321,107 @@ dma DMA(
     .d2srm_adr_o(wbs_adr_i_ram_dma),
 
     .srm2d_ack_i(wbs_ack_o_ram_dma),
-    .srm2d_dat_i(wbs_dat_o_ram_dma)
+    .srm2d_dat_i(wbs_dat_o_ram_dma),
+    // DMA <====> FIR
+    .dma2fir_valid(ss_tvalid),
+    .dma2fir_data(ss_tdata),
+    .dma2fir_last(ss_tlast),
+    .fir2dma_ready(ss_tready),
+    .dma2fir_ready(sm_tready),
+    .fir2dma_valid(sm_tvalid),
+    .fir2dma_data(sm_tdata),
+    .fir2dma_last(sm_tlast),
+    .dma_irq()
+);
+fir FIR(
+    //axilite ports
+    //write(input)--
+    .awready(awready),
+    .wready(wready),
+    .awvalid(awvalid),
+    .awaddr(awaddr),
+    .wvalid(wvalid),
+    .wdata(wdata),
+    //read(output)---
+    .arready(arready),
+    .rready(rready),
+    .arvalid(arvalid),
+    .araddr(araddr),
+    .rvalid(rvalid),
+    .rdata(rdata),
+//axistream ports
+    .ss_tvalid(ss_tvalid),
+    .ss_tdata(ss_tdata),
+    .ss_tlast(ss_tlast),
+    .ss_tready(ss_tready),
+
+    .sm_tvalid(sm_tvalid),
+    .sm_tdata(sm_tdata),
+    .sm_tlast(sm_tlast),
+    .sm_tready(sm_tready),
+
+    // ram for tap
+    .tap_WE(tap_WE),
+    .tap_EN(tap_EN),
+    .tap_Di(tap_Di),
+    .tap_A(tap_A),
+    .tap_Do(tap_Do),
+
+    // ram for data
+    .data_WE(data_WE),
+    .data_EN(data_EN),
+    .data_Di(data_Di),
+    .data_A(data_A),
+    .data_Do(data_Do),
+
+    .axis_clk(wb_clk_i),
+    .axis_rst_n(~wb_rst_i)
+);
+bram11 tap_RAM (
+    .clk(wb_clk_i),
+    .we(|tap_WE & tap_EN),
+    .re(~(|tap_WE) & tap_EN),
+    .waddr(tap_A),
+    .raddr(tap_A),
+    .wdi(tap_Di),
+    .rdo(tap_Do)
+);
+
+bram11 data_RAM(
+    .clk(wb_clk_i),
+    .we(|data_WE & data_EN),
+    .re(~(|data_WE) & data_EN),
+    .waddr(data_A),
+    .raddr(data_A),
+    .wdi(data_Di),
+    .rdo(data_Do)
+);
+wb_axilite wb_lite(
+    .wb_clk_i(wb_clk_i),
+    .wb_rst_i(~wb_rst_i),
+    .wbs_stb_i(wbs_stb_i_fir),
+    .wbs_cyc_i(wbs_cyc_i_fir),
+    .wbs_we_i(wbs_we_i_fir),
+    .wbs_sel_i(wbs_sel_i_fir),
+    .wbs_dat_i(wbs_dat_i_fir),
+    .wbs_adr_i(wbs_adr_i_fir),
+    .wbs_ack_o(wbs_ack_o_fir),
+    .wbs_dat_o(wbs_dat_o_fir),
+    //axilite ports=================================
+    //write(input)--
+    .awready(awready),
+    .wready(wready),
+    .awvalid(awvalid),
+    .awaddr(awaddr),
+    .wvalid(wvalid),
+    .wdata(wdata),
+    //read(output)---
+    .arready(arready),
+    .rready(rready),
+    .arvalid(arvalid),
+    .araddr(araddr),
+    .rvalid(rvalid),
+    .rdata(rdata)
 );
 endmodule	// user_project_wrapper
 
