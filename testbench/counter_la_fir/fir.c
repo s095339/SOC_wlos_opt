@@ -13,15 +13,16 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
     }
 	//step 2 allocate input and output buffer
 	//把INPUT存到SDRAM
-	for(int i=0;i<NI;i++){
+	for(int register i=0;i<NI;i++){
         inputsignal[i] = i;
     }
 
 	//啟動dma
 	start_dma((uint32_t) INDATA_ADR, NI,OUTDATA_ADR);
 	//step 3 start the fir accelerater
-
-
+	enum BLKLVL blklvl;
+	while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
+	send_wb(WB_FIR_BLK_LVL,  (1 << ap_start) );
 	//===============================================
 
 	//return outputsignal;
