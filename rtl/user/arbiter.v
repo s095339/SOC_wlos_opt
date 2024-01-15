@@ -76,12 +76,16 @@ always@*
             else
                 arb1_next_state = ARB1_ARB;
         ARB1_CPU:
-            if(wbs_ack_o)
-                arb1_next_state = ARB1_INIT;
+            if(wbs_ack_o & wbs_cyc_i_ram_cpu & wbs_stb_i_ram_cpu)
+                arb1_next_state = ARB1_ARB;
+            else if(~(wbs_cyc_i_ram_cpu & wbs_stb_i_ram_cpu))
+                arb1_next_state = ARB1_ARB;
             else
                 arb1_next_state = ARB1_CPU;
         ARB1_DMA:
-            if(wbs_ack_o)
+            if(wbs_ack_o & wbs_cyc_i_ram_dma & wbs_stb_i_ram_dma )
+                arb1_next_state = ARB1_ARB;
+            else if(~(wbs_cyc_i_ram_dma & wbs_stb_i_ram_dma))
                 arb1_next_state = ARB1_ARB;
             else
                 arb1_next_state = ARB1_DMA;
