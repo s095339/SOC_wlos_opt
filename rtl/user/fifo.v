@@ -19,6 +19,7 @@ module fifo
 	input wr_en,
 	output empty,
 	output full,
+    output last_data,
 	output wire [DATA_WIDTH-1:0] data_out
 );
 // signal
@@ -79,5 +80,6 @@ end
 
 assign full  = (fifo_cnt == DATA_DEPTH) ? 1'b1 : 1'b0;
 assign empty = (fifo_cnt == 0)? 1'b1 : 1'b0;
+assign last_data = (fifo_cnt == 1)? 1'b1 : 1'b0;
  
 endmodule
