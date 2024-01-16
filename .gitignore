@@ -22,3 +22,4 @@ vivado/timing_report.log
 vivado/vivado*.jou
 vivado/vivado*.log
 
+*.vcd.gtkw
