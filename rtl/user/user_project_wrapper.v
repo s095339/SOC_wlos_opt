@@ -169,7 +169,8 @@ wire wbs_ack_o_dma;
 wire [31:0] wbs_dat_o_dma;
 //decoder
 wire [1:0] decode; // 00 cpu2ram 01 cpu2fir 10 cpu2dma
-
+wire dma_irq;
+assign user_irq = {2'b00, dma_irq};
 //TODO 可能還會需要宣告一些訊號 axilite axistream之類的\
 /*--------------------------------------*/
 /* Decoder                              */
@@ -264,6 +265,7 @@ arbiter sdram_arbiter(
 /* System_ram                           */
 /*--------------------------------------*/
 //sdram
+wire [2:0]temp;
 system_ram mprj (
 `ifdef USE_POWER_PINS
 	.vccd1(vccd1),	// User area 1 1.8V power
@@ -297,7 +299,7 @@ system_ram mprj (
     .io_oeb(io_oeb),
 
     // IRQ
-    .irq(user_irq)
+    .irq(temp)
 );
 dma DMA(
     // CPU <====> DMA
@@ -331,7 +333,7 @@ dma DMA(
     .fir2dma_valid(sm_tvalid),
     .fir2dma_data(sm_tdata),
     .fir2dma_last(sm_tlast),
-    .dma_irq()
+    .dma_irq(dma_irq)
 );
 fir FIR(
     //axilite ports

@@ -1,7 +1,10 @@
 #include "fir.h"
 #include <stdint.h> 
-
-
+int intr_dma = 0;
+void __attribute__ ((section("mprjram")))isr_dma(){
+	intr_dma = 1;
+	send_wb(0x2600000c, 0xABCD0000);
+}
 
 void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
 	//fir accelerater================================
@@ -28,10 +31,10 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
 
 
 	while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
-	int ii=0;
-	do{
-		send_wb(0x2600000c, outputsignal[ii++]<<16);
-	}while(ii<NI);
+	//int ii=0;
+	//do{
+	//	send_wb(0x2600000c, outputsignal[ii++]<<16);
+	//}while(ii<NI);
 	//return outputsignal;
 }
 		
@@ -41,7 +44,19 @@ int __attribute__ ( ( section ( ".mprjram" ) ) ) main_func(){
 	
 	fir();
 
-	
+	while(1){
 
+		if(intr_dma)break;
+			//intr_dma = 0;
+			//int ii=0;
+			//do{
+			//	send_wb(0x2600000c, outputsignal[ii++]<<16);
+			//}while(ii<NI);
+			
+
+	}
+	for(int i=0;i<NI;i++){
+		send_wb(0x2600000c, outputsignal[i]<<16);
+	}
 	return 0;
 }
