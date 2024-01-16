@@ -259,6 +259,14 @@ always @(*) begin
                 x_data_in = srm2d_dat_i;
                 read_1_tmp = srm2d_ack_i;
             end
+            else if(read_1)begin
+                d2srm_stb_o = 1'd0;
+                d2srm_cyc_o = 1'd0;
+                d2srm_we_o = 1'd0;
+                d2srm_sel_o = 4'b0000;
+                d2srm_dat_o = 32'd0;
+                d2srm_adr_o = 32'd0;
+            end
         end
         WRITE: begin
             d2srm_stb_o = 1'd1;
@@ -278,6 +286,14 @@ always @(*) begin
                 y_rd = srm2d_ack_i;
                 save_adr_cnt_tmp = save_adr_cnt + 1'd1;
                 wrote_1_tmp = srm2d_ack_i;
+            end
+            else if(wrote_1)begin
+                d2srm_stb_o = 1'd0;
+                d2srm_cyc_o = 1'd0;
+                d2srm_we_o = 1'd0;
+                d2srm_sel_o = 4'b0000;
+                d2srm_dat_o = 32'd0;
+                d2srm_adr_o = 32'd0;
             end
         end
         default: begin

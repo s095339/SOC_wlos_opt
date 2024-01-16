@@ -25,14 +25,13 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
 	while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
 	send_wb(WB_FIR_BLK_LVL,  (1 << ap_start) );
 
-	
-	//====================	===========================
-
 
 	while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
 	for(int i=0;i<NI;i++){
-		int data = outputsignal[i];
-		send_wb(0x2600000c, data<<16);
+		send_wb(0x2600000c, outputsignal[i]<<16);
+
+	
+	//====================	===========================
 	}
 	//return outputsignal;
 }
