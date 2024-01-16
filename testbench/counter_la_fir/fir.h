@@ -19,7 +19,7 @@
 #define NI 64
 volatile RCV_SDRAM_INDATA int inputsignal[NI]; 
 volatile RCV_SDRAM_OUTDATA int outputsignal[NI];
-int _outputsignal[NI];
+
 
 int taps[N] = {0,-10,-9,23,56,63,56,23,-9,-10,0};
 // fir mmio
@@ -28,6 +28,12 @@ int taps[N] = {0,-10,-9,23,56,63,56,23,-9,-10,0};
 #define WB_DMA_START_ADDR   0x30000080
 #define WB_DMA_LENGTH_ADDR  0x30000084
 #define WB_DMA_SAVE_ADDR    0x30000088
+#define data_len N
+enum BLKLVL 
+{
+    ap_start, ap_done, ap_idle
+};
+
 // fir funcion/macro
 void init_fir_taps(int * t, int n){
     for(int i=0;i<n;i++){

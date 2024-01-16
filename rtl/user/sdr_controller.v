@@ -32,21 +32,13 @@ module sdr_controller (
     localparam tRef_Counter     = 10'd750;     // 
 /*
     // Address Remap
-    wire [22:0] addr, new_addr , prefetch_addr;
-    wire [12:0] Mapped_RA , prefetch_RA;
-    wire [1:0]  Mapped_BA , prefetch_BA;
-    wire [7:0]  Mapped_CA , prefetch_CA;
-    assign Mapped_RA = {user_addr[22:10]};
-    assign Mapped_BA = {user_addr[9:8]};
+    wire [22:0] addr;
+    wire [12:0] Mapped_RA;
+    wire [1:0]  Mapped_BA;
+    wire [7:0]  Mapped_CA;
+    assign Mapped_RA = {user_addr[22:14],user_addr[11:8]};
+    assign Mapped_BA = {user_addr[13:12]};
     assign Mapped_CA = {user_addr[7:0]};
-
-    assign new_addr = user_addr + 4'd8;
-
-    assign prefetch_RA = {new_addr[22:10]};
-    assign prefetch_BA = {new_addr[9:8]};
-    assign prefetch_CA = {new_addr[7:0]};
-
-
     assign addr = {Mapped_RA, Mapped_BA, Mapped_CA};
     
     //assign new_addr = user_addr + 4'd8;
@@ -87,7 +79,10 @@ module sdr_controller (
     reg [31:0] cache_d[0:1], cache_q[0:1];
     reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
     reg [1:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
-    /*
+    wire [22:0] new_addr, map_new_addr;
+    assign new_addr = user_addr + 4'd8;
+    assign map_new_addr = {new_addr[22:14], new_addr[11:8], new_addr[13:12], new_addr[7:0]};
+    
     wire [31:0] cache0, cache1;
     wire [22:0] cache_addr0, cache_addr1;
     wire [1:0]  cache_cnt0, cache_cnt1;
