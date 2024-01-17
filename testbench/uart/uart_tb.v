@@ -34,6 +34,7 @@ module uart_tb;
 	wire tx_busy;
 	wire tx_clear_req;
 
+	wire [7:0] recv_pattern;
 	assign checkbits  = mprj_io[31:16];
 	assign uart_tx = mprj_io[6];
 	assign mprj_io[5] = uart_rx;
@@ -232,36 +233,84 @@ module uart_tb;
 		#10000;
 		
 	end
-*/
+	
+*/	reg tx_vali = 0;
+	
+	integer ii;
+	reg [8-1:0]tx_in = 8'h41;
 	initial begin
 		wait(checkbits == 16'hAB40);
+		send_data_1(tx_in);
+		wait(!tx_busy);
 		$display("LA Test 1 started");
-		#200000 send_data_1;
-		#200000 send_data_2;
-		#200000 send_data_1;
-		#200000 send_data_2;
-		#200000 send_data_1;
-		#200000 send_data_2;
-		#200000 send_data_1;
-		#200000 send_data_2;
-		#200000 send_data_1;
-		#200000 send_end_data;
-		wait(checkbits == 16'hAB51);
-		$display("uart end character received");
-		$finish;		
-	end
+		// for(ii=0;ii<64;ii=ii+1)begin
+	
+		// 	wait(!tx_busy)send_data_1(tx_in);
 
-	task send_data_1;begin
+		// 	@(posedge clock);
+		// 	tx_in=tx_in+8'd1;
+		// end
+		repeat(25)begin
+			wait(!tx_busy)
+			tx_in=tx_in+8'h1;
+			tx_vali = 0;
+			@(posedge clock);
+			tx_start = 1;
+			tx_data = tx_in;
+
+			// #200000;
+			wait(tx_busy);
+			wait(!tx_busy);
+			tx_start = 0;
+			$display("tx complete 1");
+			tx_vali = 1;
+
+			
+			
+		end
+
+		wait(!tx_busy)
+		tx_in=8'h0a;
+		tx_vali = 0;
 		@(posedge clock);
 		tx_start = 1;
-		tx_data = 15;
-		
-		#50;
+		tx_data = tx_in;
+
+		// #200000;
+		wait(tx_busy);
 		wait(!tx_busy);
 		tx_start = 0;
 		$display("tx complete 1");
-		
-	end endtask
+		tx_vali = 1;
+
+
+
+		wait(checkbits == 16'hAB51);
+		$display("uart end character received");
+		//$finish;	
+	end
+
+	initial begin
+		wait(recv_pattern == 8'h0a);
+		$display("uart end character sent");
+		$finish;
+	end
+
+	task send_data_1;
+	input [8-1:0]tx_d;
+	begin
+	tx_vali = 0;
+	@(posedge clock);
+	tx_start = 1;
+	tx_data = tx_d;
+	
+	#50;
+	wait(!tx_busy);
+	tx_start = 0;
+	$display("tx complete 1");
+	tx_vali = 1;
+	end
+	endtask
 
 	task send_data_2;begin
 		@(posedge clock);
@@ -370,7 +419,8 @@ module uart_tb;
 		.ser_tx(uart_rx),
 		.tx_data(tx_data),
 		.tx_busy(tx_busy),
-		.tx_clear_req(tx_clear_req)
+		.tx_clear_req(tx_clear_req),
+		.recv_pattern(recv_pattern)
 	);
 
 endmodule
