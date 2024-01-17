@@ -117,7 +117,7 @@ module sdr_controller (
     reg refresh_flag_d, refresh_flag_q;
 
     reg ready_d, ready_q;
-    reg operate_en_d, operate_en_q;
+    reg operation_en_d, operation_en_q;
 
     reg rw_op_d, rw_op_q;
 
@@ -174,7 +174,7 @@ module sdr_controller (
             cache_cnt_d[i] = (cache_cnt_q[i] == 0 || cache_cnt_q[i] == 3)?2'd3:(cache_cnt_q[i]-1);
         end
         
-        operate_en_d = operate_en_q;
+        operation_en_d = operation_en_q;
         
         case (state_q)
             ///// INITALIZATION /////
@@ -201,7 +201,7 @@ module sdr_controller (
 
             ///// IDLE STATE /////
             IDLE: begin
-                operate_en_d = (ready_q && in_valid)? 1'd1: operate_en_q;
+                operation_en_d = (ready_q && in_valid)? 1'd1: operation_en_q;
                 if (refresh_flag_q) begin // we need to do a refresh
                     ready_d = 0;
                     state_d = PRECHARGE;
@@ -209,8 +209,8 @@ module sdr_controller (
                     precharge_bank_d = 3'b100; // all banks
                     refresh_flag_d = 1'b0; // clear the refresh flag
                 end 
-                else if ((ready_q && in_valid) || operate_en_q) begin // operation waiting
-                    operate_en_d = 0;
+                else if ((ready_q && in_valid) || operation_en_q) begin // operation waiting
+                    operation_en_d = 0;
                     ready_d = 1'b0; 
                     rw_op_d = rw; 
                     addr_d = addr;
@@ -361,7 +361,7 @@ module sdr_controller (
             dq_en_q <= 1'b0;
             state_q <= INIT;
             ready_q <= 1'b0;
-            operate_en_q <= 1'b0;
+            operation_en_q <= 1'b0;
             for (i=0; i<2; i=i+1) begin
                 cache_q[i] <= 0;
                 cache_addr_q[i] <= 0;
@@ -372,7 +372,7 @@ module sdr_controller (
             dq_en_q <= dq_en_d;
             state_q <= state_d;
             ready_q <= ready_d;
-            operate_en_q <= operate_en_d;
+            operation_en_q <= operation_en_d;
             for (i=0; i<2; i=i+1) begin
             	cache_q[i] <= cache_d[i];
             	cache_addr_q[i] <= cache_addr_d[i];
