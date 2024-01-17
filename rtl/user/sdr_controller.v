@@ -46,11 +46,14 @@ module sdr_controller (
     reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
     reg [1:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
     wire [22:0] new_addr, prefetch_addr;
-    assign new_addr = user_addr + 4'd8;
+    assign new_addr = user_addr + 22'd8;
     assign prefetch_addr = {new_addr[22:14], new_addr[11:8], new_addr[13:12], new_addr[7:0]};
     assign Prefetch_BA = prefetch_addr[9:8];
-
-    
+    wire Prefetch_EN , ROW_addr_hit ,ROW_open;//Prefetch_Row_open;
+    assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
+    assign ROW_addr_hit = (row_addr_q[Mapped_BA] == Mapped_RA);
+    assign ROW_open = (row_open_q[Mapped_BA]);
+    //assign Prefetch_Row_open = (row_open_q[Prefetch_BA]);
     // Commands for the SDRAM
     localparam CMD_UNSELECTED    = 4'b1000;
     localparam CMD_NOP           = 4'b0111;
@@ -200,7 +203,7 @@ module sdr_controller (
             IDLE: begin
             	
                 if (ready_q && in_valid) begin
-                        start_d = 1'd1;
+                    start_d = 1'd1;
                 end
 		
                 if (refresh_flag_q) begin // we need to do a refresh
@@ -220,21 +223,23 @@ module sdr_controller (
                         data_d = data_in;
 
                     // if the row is open we don't have to activate it
-                    if (row_open_q[Mapped_BA]) begin
-                        if (row_addr_q[Mapped_BA] == Mapped_RA) begin // Row is already open
+                    if (ROW_open) begin
+                        if (ROW_addr_hit) begin // Row is already open
                             if (rw)
                                 state_d = WRITE;
                             else begin
-				                if (cache_addr_q[addr[2]] == addr) begin // if the address is in cache
+				                if (Prefetch_EN) begin // if the address is in cache
                                     out_valid_d = 1'b1;
                                     data_d = cache_q[addr[2]];
 				     
-                                    if (row_open_q[Prefetch_BA]) begin
+                                    if (ROW_open) begin
                                         cmd_d = CMD_READ;
                                         a_d = {7'b0, prefetch_addr[7:2]};
+                                        //bank1 for 0X38001 input data
+                                        //bank2 for 0x38002 output data
                                         ba_d = Prefetch_BA;
-                                        cache_addr_d[prefetch_addr[2]] = prefetch_addr;
-                                        cache_cnt_d[prefetch_addr[2]] = 2;
+                                        cache_addr_d[new_addr[2]] = prefetch_addr;
+                                        cache_cnt_d[new_addr[2]] = 2;
                                     end
 				                end 
                                 else state_d = READ;
@@ -361,7 +366,7 @@ module sdr_controller (
             for (i=0; i<2; i=i+1) begin
                 cache_q[i] <= 0;
                 cache_addr_q[i] <= 0;
-                cache_cnt_q[i] <= 2'b11;
+                cache_cnt_q[i] <= 2'd3;
             end
         end else begin
             cle_q <= cle_d;
