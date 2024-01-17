@@ -69,14 +69,14 @@ always@*
     case(arb1_state)
         ARB1_ARB:
             if(dma_valid & ~cpu_valid & wbs_ack_i_ram)
-                arb1_next_state <= ARB1_DMA_IM;
+                arb1_next_state = ARB1_DMA_IM;
             else if(~dma_valid & cpu_valid & wbs_ack_i_ram)
-                arb1_next_state <= ARB1_CPU_IM;
+                arb1_next_state = ARB1_CPU_IM;
             else if(dma_valid & ~cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = ARB1_DMA;
             else if(~dma_valid & cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = ARB1_CPU;
-            else if(dma_valid & cpu_valid & ~wbs_ack_i_ram)
+            else if(dma_valid & cpu_valid & wbs_ack_i_ram)
                 arb1_next_state = (arb1_switch)?ARB1_DMA_IM:ARB1_CPU_IM;
             else if(dma_valid & cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = (arb1_switch)?ARB1_DMA:ARB1_CPU;
