@@ -139,7 +139,7 @@ module system_ram #(
 //********************//
 // SDRAM              //
 //********************//
-        sdr_controller user_sdram_controller (
+    sdr_controller user_sdram_controller (
         .clk(clk),
         .rst(rst),
         
