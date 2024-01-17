@@ -4,10 +4,6 @@
 #include "header.h"
 
 
-void __attribute__ ((section(".mprj"))) interrupt_flag(){
-
-
-}
 void __attribute__ ( ( section ( ".mprj" ) ) ) uart_end()
 {
     endflag = 1;
@@ -28,10 +24,10 @@ void __attribute__ ( ( section ( ".mprj" ) ) ) uart_write_char(char c)
     reg_tx_data = c;
 }
 
-void __attribute__ ( ( section ( ".mprj" ) ) ) uart_write_string(const char *s)
+void __attribute__ ( ( section ( ".mprj" ) ) ) uart_write_string(const char *s, int idx)
 {
-    while (*s)
-        uart_write_char(*(s++));
+    for(int i=0;i<idx;i++)
+        uart_write_char(*(s+i));
 }
 
 
@@ -51,13 +47,13 @@ char __attribute__ ( ( section ( ".mprj" ) ) ) uart_read_char()
 int __attribute__ ( ( section ( ".mprj" ) ) ) uart_read()
 {
     int num;
+	int idx = 0;
     if((((reg_uart_stat>>5) | 0) == 0) && (((reg_uart_stat>>4) | 0) == 0)){
-		while(((reg_uart_stat) & 0x00000002 ) == 0x00000002){
 			for(int i = 0; i < 1; i++)
 				asm volatile ("nop");
 
 			num = reg_rx_data;
-		}
+			
     }
 	//(*(volatile uint32_t*)0x2600000c) = num << 16;
     return num;
@@ -155,6 +151,10 @@ int* __attribute__ ( ( section ( ".mprjram" ) ) ) matmul()
 }
 
 // check ebd
+void __attribute__ ((section(".mprj"))) interrupt_flag(){
+	intr_flag = 1;
+}
+
 void __attribute__ ( ( section ( ".mprjram" ) ) ) ckend(){
 	
 	while(endflag == 0);
@@ -162,16 +162,33 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) ckend(){
 }
 
 void __attribute__ ( ( section ( ".mprjram" ) ) ) main_loop(){
+	int finish = 0;
+	char buffer[10];
+	int idx = 0;
+	int i = 0;
+	while(1){
+		if(intr_flag){
+			
+			if(((reg_uart_stat) & 0x00000002 ) == 0x00000002 && idx < uart_fifo_depth){
+				int data = uart_read();
+				char c = (char)data;
+				if(data == 0x0a) finish = 1;
+				buffer[idx++] = c;
+				//send_wb(GPIO, data);
+			}else{
+				intr_flag = 0;
+				i = 0;
 
+			}
+		}else{
+			uart_write_string(buffer,idx);
+			idx = 0;
+		}
 
-
-	//while(1){
+		if(idx ==0 && finish)break;
 	
-	char c[20]= "ABCDEFGHIJKLMNOP";
-	uart_write_string(c);
 	
-
-	//}
-
+	}
+	endflag = 1 ;
 	
 }

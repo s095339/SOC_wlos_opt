@@ -9,14 +9,15 @@ module tbuart (
 	output reg ser_tx,
 	input [7:0] tx_data,
 	output reg tx_busy,
-	output reg tx_clear_req
+	output reg tx_clear_req,
+	output reg [7:0] recv_pattern
 );
 	reg [2:0] recv_state;
 	reg [2:0] recv_next_state;
 	reg [2:0] rx_index;
 	reg [31:0]clk_div;
 	reg [31:0]clk_cnt;
-	reg [7:0] recv_pattern;
+	
 	reg [8*10-1:0] recv_buf_data;	// 50 characters.  Increase as needed for tests.
 
 	reg [2:0] tr_state;
@@ -111,7 +112,7 @@ module tbuart (
 	always@(posedge clk)begin
 		if(recv_state==R_STOP_BIT)begin
 			recv_buf_data <= {recv_buf_data, recv_pattern};
-			$display("recevied word %d", recv_pattern);
+			$display("recevied word %c", recv_pattern);
 		end
 	end
 	
