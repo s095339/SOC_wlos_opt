@@ -19,6 +19,9 @@
 #include <defs.h>
 #include <stub.c>
 
+#ifdef USER_PROJ_IRQ0_EN
+#include <irq_vex.h>
+#endif
 extern int main_func();
 // --------------------------------------------------------
 
@@ -33,7 +36,9 @@ extern int main_func();
 void main()
 {
 	int j;
-
+#ifdef USER_PROJ_IRQ0_EN
+    int mask;
+#endif
 	/* Set up the housekeeping SPI to be connected internally so	*/
 	/* that external pin changes don't affect it.			*/
 
@@ -117,7 +122,14 @@ void main()
 
 	// Configure LA probes from [63:32] as inputs to disable counter write
 	reg_la1_oenb = reg_la1_iena = 0x00000000;    
-
+#ifdef USER_PROJ_IRQ0_EN	
+	// unmask USER_IRQ_0_INTERRUPT
+	mask = irq_getmask();
+	mask |= 1 << USER_IRQ_0_INTERRUPT; // USER_IRQ_0_INTERRUPT = 2
+	irq_setmask(mask);
+	// enable user_irq_0_ev_enable
+	user_irq_0_ev_enable_write(1);	
+#endif
 /*
 	while (1) {
 		if (reg_la0_data_in > 0x1F4) {

@@ -48,7 +48,8 @@ parameter ARB1_CPU = 3'd1;
 parameter ARB1_DMA = 3'd2;
 parameter ARB1_INIT = 3'd3;
 parameter ARB1_ARB = 3'd0;
-
+parameter ARB1_CPU_IM = 3'd4;
+parameter ARB1_DMA_IM = 3'd5;
 parameter cnt_limit = 3'd4;
 
 //*-----------------------------*//
@@ -67,11 +68,17 @@ always@(posedge wb_clk_i or posedge wb_rst_i)
 always@*
     case(arb1_state)
         ARB1_ARB:
-            if(dma_valid & ~cpu_valid)
+            if(dma_valid & ~cpu_valid & wbs_ack_i_ram)
+                arb1_next_state = ARB1_DMA_IM;
+            else if(~dma_valid & cpu_valid & wbs_ack_i_ram)
+                arb1_next_state = ARB1_CPU_IM;
+            else if(dma_valid & ~cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = ARB1_DMA;
-            else if(~dma_valid & cpu_valid)
+            else if(~dma_valid & cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = ARB1_CPU;
-            else if(dma_valid & cpu_valid)
+            else if(dma_valid & cpu_valid & wbs_ack_i_ram)
+                arb1_next_state = (arb1_switch)?ARB1_DMA_IM:ARB1_CPU_IM;
+            else if(dma_valid & cpu_valid & ~wbs_ack_i_ram)
                 arb1_next_state = (arb1_switch)?ARB1_DMA:ARB1_CPU;
             else
                 arb1_next_state = ARB1_ARB;
@@ -89,8 +96,6 @@ always@*
                 arb1_next_state = ARB1_ARB;
             else
                 arb1_next_state = ARB1_DMA;
-        ARB1_INIT:
-            arb1_next_state = ARB1_ARB;
         default:
             arb1_next_state = ARB1_ARB;
     endcase
@@ -119,28 +124,28 @@ always@(posedge wb_clk_i or posedge wb_rst_i)
         arb1_cnt <= arb1_cnt_next;
 
 //--- decode ---//
-assign wbs_stb_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_stb_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA )?wbs_stb_i_ram_dma:1'd0 ; 
+assign wbs_stb_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_stb_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_stb_i_ram_dma:1'd0 ; 
 
-assign wbs_cyc_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_cyc_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_cyc_i_ram_dma:1'd0; 
+assign wbs_cyc_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_cyc_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_cyc_i_ram_dma:1'd0; 
 
-assign wbs_we_i =   (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_we_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_we_i_ram_dma:1'd0; 
+assign wbs_we_i =   (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_we_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_we_i_ram_dma:1'd0; 
 
-assign wbs_sel_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_sel_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_sel_i_ram_dma:4'd0; 
+assign wbs_sel_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_sel_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_sel_i_ram_dma:4'd0; 
 
-assign wbs_dat_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_dat_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_dat_i_ram_dma:32'd0; 
+assign wbs_dat_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_dat_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_dat_i_ram_dma:32'd0; 
 
-assign wbs_adr_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU)?wbs_adr_i_ram_cpu:
-                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA)?wbs_adr_i_ram_dma:32'd0; 
+assign wbs_adr_i =  (arb1_next_state == ARB1_CPU || arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM )?wbs_adr_i_ram_cpu:
+                    (arb1_next_state == ARB1_DMA || arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM )?wbs_adr_i_ram_dma:32'd0; 
 
-assign wbs_ack_o_ram_cpu =  (arb1_state == ARB1_CPU)?wbs_ack_o:1'b0;
-assign wbs_ack_o_ram_dma =  (arb1_state == ARB1_DMA)?wbs_ack_o:1'b0;
-assign wbs_dat_o_ram_cpu =  (arb1_state == ARB1_CPU)?wbs_dat_o:32'd0;
-assign wbs_dat_o_ram_dma =  (arb1_state == ARB1_DMA)?wbs_dat_o:32'd0;
+assign wbs_ack_o_ram_cpu =  (arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM)?wbs_ack_o:1'b0;
+assign wbs_ack_o_ram_dma =  (arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM)?wbs_ack_o:1'b0;
+assign wbs_dat_o_ram_cpu =  (arb1_state == ARB1_CPU || arb1_next_state == ARB1_CPU_IM || arb1_state == ARB1_CPU_IM)?wbs_dat_o:32'd0;
+assign wbs_dat_o_ram_dma =  (arb1_state == ARB1_DMA || arb1_next_state == ARB1_DMA_IM || arb1_state == ARB1_DMA_IM)?wbs_dat_o:32'd0;
 
 
 assign wbs_stb_o_ram = wbs_stb_i;

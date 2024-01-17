@@ -12,6 +12,7 @@ extern char uart_read_char();
 extern char uart_write_char();
 extern int uart_write();
 extern void uart_end();
+extern void isr_dma();
 void isr(void);
 
 #ifdef CONFIG_CPU_HAS_INTERRUPT
@@ -34,12 +35,14 @@ void isr(void)
 
     if ( irqs & (1 << USER_IRQ_0_INTERRUPT)) {
         user_irq_0_ev_pending_write(1); //Clear Interrupt Pending Event
+        isr_dma();
+        /*
         buf = uart_read();
         if(buf == 0x0a)
             uart_end();
         else
             uart_write(buf);
-
+        */
     }
 #endif
 
