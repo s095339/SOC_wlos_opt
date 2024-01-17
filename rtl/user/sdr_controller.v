@@ -117,7 +117,7 @@ module sdr_controller (
     reg refresh_flag_d, refresh_flag_q;
 
     reg ready_d, ready_q;
-    reg start_d, start_q;
+    reg operate_en_d, operate_en_q;
 
     reg rw_op_d, rw_op_q;
 
@@ -174,7 +174,7 @@ module sdr_controller (
             cache_cnt_d[i] = (cache_cnt_q[i] == 0 || cache_cnt_q[i] == 3)?2'd3:(cache_cnt_q[i]-1);
         end
         
-        start_d = start_q;
+        operate_en_d = operate_en_q;
         
         case (state_q)
             ///// INITALIZATION /////
@@ -201,11 +201,7 @@ module sdr_controller (
 
             ///// IDLE STATE /////
             IDLE: begin
-            	
-                if (ready_q && in_valid) begin
-                    start_d = 1'd1;
-                end
-		
+                operate_en_d = (ready_q && in_valid)? 1'd1: operate_en_q;
                 if (refresh_flag_q) begin // we need to do a refresh
                     ready_d = 0;
                     state_d = PRECHARGE;
@@ -213,13 +209,14 @@ module sdr_controller (
                     precharge_bank_d = 3'b100; // all banks
                     refresh_flag_d = 1'b0; // clear the refresh flag
                 end 
-                else if ((ready_q && in_valid) || start_q) begin // operation waiting
-                    start_d = 0;
-                    ready_d = 1'b0; // clear the queue
-                    rw_op_d = rw; // save the values we'll need later
+                else if ((ready_q && in_valid) || operate_en_q) begin // operation waiting
+                    operate_en_d = 0;
+                    ready_d = 1'b0; 
+                    rw_op_d = rw; 
                     addr_d = addr;
 
-                    if (rw) // Write
+                    if (rw) 
+                        // Write
                         data_d = data_in;
 
                     // if the row is open we don't have to activate it
@@ -258,6 +255,8 @@ module sdr_controller (
                 else if (!ready_q) begin
                     ready_d = 1;
                 end
+                
+		
             end
 
             ///// REFRESH /////
@@ -312,7 +311,7 @@ module sdr_controller (
                 out_valid_d = 1'b1;
                 state_d = IDLE;
                 
-                if (row_open_q[Prefetch_BA]) begin
+                if (ROW_open) begin
                     cmd_d = CMD_READ;
                     a_d ={7'b0, prefetch_addr[7:2]};  
                     ba_d = Prefetch_BA;
@@ -362,7 +361,7 @@ module sdr_controller (
             dq_en_q <= 1'b0;
             state_q <= INIT;
             ready_q <= 1'b0;
-            start_q <= 1'b0;
+            operate_en_q <= 1'b0;
             for (i=0; i<2; i=i+1) begin
                 cache_q[i] <= 0;
                 cache_addr_q[i] <= 0;
@@ -373,7 +372,7 @@ module sdr_controller (
             dq_en_q <= dq_en_d;
             state_q <= state_d;
             ready_q <= ready_d;
-            start_q <= start_d;
+            operate_en_q <= operate_en_d;
             for (i=0; i<2; i=i+1) begin
             	cache_q[i] <= cache_d[i];
             	cache_addr_q[i] <= cache_addr_d[i];
