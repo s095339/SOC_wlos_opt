@@ -12,6 +12,7 @@ extern char uart_read_char();
 extern char uart_write_char();
 extern int uart_write();
 extern void uart_end();
+extern void interrupt_flag();
 void isr(void);
 
 #ifdef CONFIG_CPU_HAS_INTERRUPT
@@ -31,14 +32,10 @@ void isr(void)
 #else
     uint32_t irqs = irq_pending() & irq_getmask();
     int buf;
-
+    
     if ( irqs & (1 << USER_IRQ_0_INTERRUPT)) {
         user_irq_0_ev_pending_write(1); //Clear Interrupt Pending Event
-        buf = uart_read();
-        if(buf == 0x0a)
-            uart_end();
-        //else
-        //    uart_write(buf);
+        interrupt_flag();
 
     }
 #endif

@@ -35,5 +35,9 @@ int A[SIZES] = {893, 40, 3233, 4267, 2669, 2541, 9073, 6023, 5681, 4622};
 
 //uart end
 int endflag = 0;
+int intr_flag = 0;
+#define uart_fifo_depth 8
+#define GPIO 0x260000c
+#define send_wb(target, data) (*(volatile uint32_t*)(target) = data)
 
 #endif
