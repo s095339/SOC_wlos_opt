@@ -24,6 +24,16 @@ module sdr_controller (
         output  out_valid           // pulses high when data from read is valid
     );
 
+
+    // MA Map
+    // BA (Bank Address) - 9:8
+    // RA (Row Address)  - 22:10
+    // CA (Col Address)  - 2'b0, 1'b0, <7:0>, 2'b0
+    `define BA      9:8
+    `define RA      22:10
+    `define CA      7:0
+
+
     // SDRAM Timing  
     localparam tCASL            = 13'd2;       // 3T actually
     localparam tPRE             = 13'd2;       // 3T
@@ -32,25 +42,21 @@ module sdr_controller (
     localparam tRef_Counter     = 10'd750;     // 
 
     // Address Remap
-    wire [22:0] addr;
+    wire [22:0] addr,plus8_addr, prefetch_addr;
     wire [12:0] Mapped_RA;
     wire [1:0]  Mapped_BA, Prefetch_BA;
     wire [7:0]  Mapped_CA;
     assign Mapped_RA = {user_addr[22:14],user_addr[11:8]};
     assign Mapped_BA = {user_addr[13:12]};
-    assign Mapped_CA = {user_addr[7:0]};
+    assign Mapped_CA = {user_addr[`CA]};
     assign addr = {Mapped_RA, Mapped_BA, Mapped_CA};
     
-    // Cache implementation
-    reg [31:0] cache_d[0:1], cache_q[0:1];
-    reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
-    reg [1:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
-    wire [22:0] new_addr, prefetch_addr;
-    assign new_addr = user_addr + 22'd8;
-    assign prefetch_addr = {new_addr[22:14], new_addr[11:8], new_addr[13:12], new_addr[7:0]};
-    assign Prefetch_BA = prefetch_addr[9:8];
+    //Cache
+    assign plus8_addr = user_addr + 22'b1000;
+    assign prefetch_addr = {plus8_addr[22:14], plus8_addr[11:8], plus8_addr[13:12], plus8_addr[`CA]};
+    assign Prefetch_BA = prefetch_addr[`BA];
     wire Prefetch_EN , ROW_addr_hit ,ROW_open;//Prefetch_Row_open;
-    assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
+   
     assign ROW_addr_hit = (row_addr_q[Mapped_BA] == Mapped_RA);
     assign ROW_open = (row_open_q[Mapped_BA]);
     //assign Prefetch_Row_open = (row_open_q[Prefetch_BA]);
@@ -118,7 +124,8 @@ module sdr_controller (
 
     reg ready_d, ready_q;
     reg operation_en_d, operation_en_q;
-
+    
+    reg saved_rw_d, saved_rw_q;
     reg rw_op_d, rw_op_q;
 
     reg [3:0] row_open_d, row_open_q;
@@ -131,6 +138,15 @@ module sdr_controller (
     assign busy = !ready_q;
     assign out_valid = out_valid_q;
     
+
+    reg [31:0] cache_d[0:1], cache_q[0:1];
+    reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
+    reg [2:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
+
+     assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
+
+
+
     always @* begin
         // Default values
         dq_d = dq_q;
@@ -150,6 +166,7 @@ module sdr_controller (
         precharge_bank_d = precharge_bank_q;
         rw_op_d = rw_op_q;
         ready_d = ready_q;
+        
 
         row_open_d = row_open_q;
 
@@ -167,15 +184,35 @@ module sdr_controller (
             refresh_ctr_d = 10'd0;
             refresh_flag_d = 1'b1;
         end
+
         
-        for (i=0; i<2; i=i+1) begin
-            cache_d[i] = (cache_cnt_q[i] == 0)? sdram_dqi : cache_q[i];
-            cache_addr_d[i] = cache_addr_q[i];
-            cache_cnt_d[i] = (cache_cnt_q[i] == 0 || cache_cnt_q[i] == 3)?2'd3:(cache_cnt_q[i]-1);
+
+        for (i=0;i<2;i=i+1) begin
+            cache_addr_d[i] = cache_addr_q[i]; 
+            case (cache_cnt_q[i])
+                3'd1: begin
+                    cache_d[i] = sdram_dqi;         
+                    cache_cnt_d[i] = 3'd4;
+                end
+                3'd4: begin
+                    cache_d[i] = cache_q[i];         
+                    cache_cnt_d[i] = 3'd4;
+                end
+                default: begin
+                    cache_d[i] = cache_q[i];         
+                    cache_cnt_d[i] = cache_cnt_q[i] - 1;
+                end
+            endcase
         end
-        
+
+
         operation_en_d = operation_en_q;
         
+        /*
+        if (ready_q && in_valid) begin
+            saved_rw_d = rw;
+        end 
+        */
         case (state_q)
             ///// INITALIZATION /////
             INIT: begin
@@ -194,51 +231,46 @@ module sdr_controller (
             end
             WAIT: begin
                 delay_ctr_d = delay_ctr_q - 1'b1;
-                if (delay_ctr_q == 13'd0) begin
-                    state_d = next_state_q;
-                end
+                if (delay_ctr_q == 13'd0) state_d = next_state_q;
             end
 
             ///// IDLE STATE /////
             IDLE: begin
-                operation_en_d = (ready_q && in_valid)? 1'd1: operation_en_q;
-                if (refresh_flag_q) begin // we need to do a refresh
-                    ready_d = 0;
+                operation_en_d = (ready_q && in_valid)? 1'b1: operation_en_q;
+                if (refresh_flag_q) begin 
+                    ready_d = 1'b0;
                     state_d = PRECHARGE;
                     next_state_d = REFRESH;
                     precharge_bank_d = 3'b100; // all banks
                     refresh_flag_d = 1'b0; // clear the refresh flag
                 end 
+                else if (!ready_q) ready_d = 1;
                 else if ((ready_q && in_valid) || operation_en_q) begin // operation waiting
-                    operation_en_d = 0;
+                    operation_en_d = 1'b0;
                     ready_d = 1'b0; 
                     rw_op_d = rw; 
                     addr_d = addr;
-
-                    if (rw) 
-                        // Write
-                        data_d = data_in;
-
+                    if (rw) data_d = data_in;
                     // if the row is open we don't have to activate it
                     if (ROW_open) begin
-                        if (ROW_addr_hit) begin // Row is already open
-                            if (rw)
-                                state_d = WRITE;
+                        if (ROW_addr_hit) begin //Row hit
+                            if (rw) state_d = WRITE;
                             else begin
-				                if (Prefetch_EN) begin // if the address is in cache
+				                if (Prefetch_EN) begin //cache hit
                                     out_valid_d = 1'b1;
                                     data_d = cache_q[addr[2]];
-				     
+                                    //cache 送資料出去給data_d
                                     if (ROW_open) begin
                                         cmd_d = CMD_READ;
                                         a_d = {7'b0, prefetch_addr[7:2]};
+                                        //bank0 for 0x38000 instruction
                                         //bank1 for 0X38001 input data
                                         //bank2 for 0x38002 output data
-                                        ba_d = Prefetch_BA;
-                                        cache_addr_d[new_addr[2]] = prefetch_addr;
-                                        cache_cnt_d[new_addr[2]] = 2;
-                                    end
-				                end 
+                                        ba_d = Mapped_BA;
+                                        cache_cnt_d[plus8_addr[2]] = 3'd3;
+                                        cache_addr_d[plus8_addr[2]] = prefetch_addr;      
+                                    end 
+                                end
                                 else state_d = READ;
                             end 
                         end 
@@ -247,16 +279,9 @@ module sdr_controller (
                             precharge_bank_d = {1'b0, Mapped_BA};
                             next_state_d = ACTIVATE; // open current row
                         end
-                    end 
-                    else begin // no rows open
-                        state_d = ACTIVATE; // open the row
                     end
+                    else state_d = ACTIVATE; // open the row
                 end
-                else if (!ready_q) begin
-                    ready_d = 1;
-                end
-                
-		
             end
 
             ///// REFRESH /////
@@ -283,20 +308,18 @@ module sdr_controller (
 
                 state_d = WAIT;
 
-                if (rw_op_q)
-                    next_state_d = WRITE;
-                else
-                    next_state_d = READ;
+                if (rw_op_q) next_state_d = WRITE;
+                else next_state_d = READ;
 
-                row_open_d[addr_q[9:8]] = 1'b1; // row is now open
-                row_addr_d[addr_q[9:8]] = addr_q[22:10];
+                row_open_d[addr_q[`BA]] = 1'b1; // row is now open
+                row_addr_d[addr_q[`BA]] = addr_q[`RA];
             end
 
             ///// READ /////
             READ: begin
                 cmd_d = CMD_READ;
                 a_d = {7'b0, addr_q[7:2]};
-                ba_d = addr_q[9:8];
+                ba_d = addr_q[`BA];
                 state_d = WAIT;
 
                 // Jiin
@@ -315,8 +338,10 @@ module sdr_controller (
                     cmd_d = CMD_READ;
                     a_d ={7'b0, prefetch_addr[7:2]};  
                     ba_d = Prefetch_BA;
+                    cache_cnt_d[prefetch_addr[2]] = 3'd3;
+            	    //3 2 1 data in 
                     cache_addr_d[prefetch_addr[2]] = prefetch_addr;
-                    cache_cnt_d[prefetch_addr[2]] = 2;
+                    
             	 end
             end
 
@@ -328,7 +353,7 @@ module sdr_controller (
                 // data_d = data_q;
                 dq_en_d = 1'b1; // enable out bus
                 a_d = {7'b0, addr_q[7:2]};
-                ba_d = addr_q[9:8];
+                ba_d = addr_q[`BA];
 
                 state_d = IDLE;
             end
@@ -364,8 +389,8 @@ module sdr_controller (
             operation_en_q <= 1'b0;
             for (i=0; i<2; i=i+1) begin
                 cache_q[i] <= 0;
+                cache_cnt_q[i] <= 3'd4;
                 cache_addr_q[i] <= 0;
-                cache_cnt_q[i] <= 2'd3;
             end
         end else begin
             cle_q <= cle_d;
@@ -373,32 +398,32 @@ module sdr_controller (
             state_q <= state_d;
             ready_q <= ready_d;
             operation_en_q <= operation_en_d;
+            cmd_q <= cmd_d;
+            dqm_q <= dqm_d;
+            ba_q <= ba_d;
+            a_q <= a_d;
+            dq_q <= dq_d;
+            dqi_q <= dqi_d;
+            //saved_rw_q <= saved_rw_d;
+            next_state_q <= next_state_d;
+            refresh_flag_q <= refresh_flag_d;
+            refresh_ctr_q <= refresh_ctr_d;
+            data_q <= data_d;
+            addr_q <= addr_d;
+            out_valid_q <= out_valid_d;
+            row_open_q <= row_open_d;
+            for (i=0;i<4;i=i+1)begin
+                row_addr_q[i] <= row_addr_d[i];
+            end
             for (i=0; i<2; i=i+1) begin
             	cache_q[i] <= cache_d[i];
+                cache_cnt_q[i] <= cache_cnt_d[i];
             	cache_addr_q[i] <= cache_addr_d[i];
-            	cache_cnt_q[i] <= cache_cnt_d[i];
             end
+            precharge_bank_q <= precharge_bank_d;
+            rw_op_q <= rw_op_d;
+            delay_ctr_q <= delay_ctr_d;
         end
-
-        cmd_q <= cmd_d;
-        dqm_q <= dqm_d;
-        ba_q <= ba_d;
-        a_q <= a_d;
-        dq_q <= dq_d;
-        dqi_q <= dqi_d;
-
-        next_state_q <= next_state_d;
-        refresh_flag_q <= refresh_flag_d;
-        refresh_ctr_q <= refresh_ctr_d;
-        data_q <= data_d;
-        addr_q <= addr_d;
-        out_valid_q <= out_valid_d;
-        row_open_q <= row_open_d;
-        for (i = 0; i < 4; i = i + 1)
-            row_addr_q[i] <= row_addr_d[i];
-        precharge_bank_q <= precharge_bank_d;
-        rw_op_q <= rw_op_d;
-        delay_ctr_q <= delay_ctr_d;
     end
 
 endmodule
