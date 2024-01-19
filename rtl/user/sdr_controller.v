@@ -48,13 +48,14 @@ module sdr_controller (
     wire [7:0]  Mapped_CA;
     assign Mapped_RA = {user_addr[22:14],user_addr[11:8]};
     assign Mapped_BA = {user_addr[13:12]};
-    assign Mapped_CA = {user_addr[`CA]};
+    assign Mapped_CA = {user_addr[7:0]};
     assign addr = {Mapped_RA, Mapped_BA, Mapped_CA};
     
     //Cache
     assign plus8_addr = user_addr + 22'b1000;
-    assign prefetch_addr = {plus8_addr[22:14], plus8_addr[11:8], plus8_addr[13:12], plus8_addr[`CA]};
-    assign Prefetch_BA = prefetch_addr[`BA];
+    assign prefetch_addr = {plus8_addr[22:14], plus8_addr[11:8], plus8_addr[13:12], plus8_addr[7:0]};
+    assign Prefetch_BA = prefetch_addr[7:0];
+    
     wire Prefetch_EN , ROW_addr_hit ,ROW_open;//Prefetch_Row_open;
    
     assign ROW_addr_hit = (row_addr_q[Mapped_BA] == Mapped_RA);
@@ -142,11 +143,18 @@ module sdr_controller (
     reg [31:0] cache_d[0:1], cache_q[0:1];
     reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
     reg [2:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
-
-     assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
-
-
-
+    
+    assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
+    //debug 
+    wire [31:0]prefetch_data0,prefetch_data1;
+    wire [22:0]prefetch_addr0,prefetch_addr1;
+    wire [2:0]prefetch_cnt0,prefetch_cnt1;
+    assign prefetch_addr0 = cache_addr_d[0];
+    assign prefetch_addr1 = cache_addr_d[1];
+    assign prefetch_data0 = cache_d[0];
+    assign prefetch_data1 = cache_d[1];
+    assign prefetch_cnt0 = cache_cnt_d[0];
+    assign prefetch_cnt1 = cache_cnt_d[1];
     always @* begin
         // Default values
         dq_d = dq_q;
