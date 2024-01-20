@@ -48,14 +48,13 @@ module sdr_controller (
     wire [7:0]  Mapped_CA;
     assign Mapped_RA = {user_addr[22:14],user_addr[11:8]};
     assign Mapped_BA = {user_addr[13:12]};
-    assign Mapped_CA = {user_addr[7:0]};
+    assign Mapped_CA = {user_addr[`CA]};
     assign addr = {Mapped_RA, Mapped_BA, Mapped_CA};
     
     //Cache
     assign plus8_addr = user_addr + 22'b1000;
-    assign prefetch_addr = {plus8_addr[22:14], plus8_addr[11:8], plus8_addr[13:12], plus8_addr[7:0]};
-    assign Prefetch_BA = prefetch_addr[7:0];
-    
+    assign prefetch_addr = {plus8_addr[22:14], plus8_addr[11:8], plus8_addr[13:12], plus8_addr[`CA]};
+    assign Prefetch_BA = prefetch_addr[`BA];
     wire Prefetch_EN , ROW_addr_hit ,ROW_open;//Prefetch_Row_open;
    
     assign ROW_addr_hit = (row_addr_q[Mapped_BA] == Mapped_RA);
@@ -143,18 +142,20 @@ module sdr_controller (
     reg [31:0] cache_d[0:1], cache_q[0:1];
     reg [22:0] cache_addr_d[0:1], cache_addr_q[0:1];
     reg [2:0]  cache_cnt_d[0:1], cache_cnt_q[0:1]; 
-    
+
     assign Prefetch_EN = (cache_addr_q[addr[2]] == addr);
-    //debug 
-    wire [31:0]prefetch_data0,prefetch_data1;
-    wire [22:0]prefetch_addr0,prefetch_addr1;
-    wire [2:0]prefetch_cnt0,prefetch_cnt1;
+    //debug //2-D signal to 1-D to show in GTKwave
+    wire [31:0] prefetch_data0,prefetch_data1;
+    wire [22:0] prefetch_addr0,prefetch_addr1;
+    wire [2:0]  prefetch_cnt0,prefetch_cnt1;
+    assign prefetch_data0 =  cache_d[0];
+    assign prefetch_data1 =  cache_d[1];
     assign prefetch_addr0 = cache_addr_d[0];
     assign prefetch_addr1 = cache_addr_d[1];
-    assign prefetch_data0 = cache_d[0];
-    assign prefetch_data1 = cache_d[1];
+
     assign prefetch_cnt0 = cache_cnt_d[0];
     assign prefetch_cnt1 = cache_cnt_d[1];
+
     always @* begin
         // Default values
         dq_d = dq_q;
@@ -194,7 +195,7 @@ module sdr_controller (
         end
 
         
-
+        //cache counter and cache setting
         for (i=0;i<2;i=i+1) begin
             cache_addr_d[i] = cache_addr_q[i]; 
             case (cache_cnt_q[i])
@@ -269,14 +270,14 @@ module sdr_controller (
                                     data_d = cache_q[addr[2]];
                                     //cache 送資料出去給data_d
                                     if (ROW_open) begin
+                                        cache_cnt_d[plus8_addr[2]] = 3'd3;
+                                        cache_addr_d[plus8_addr[2]] = prefetch_addr;
                                         cmd_d = CMD_READ;
                                         a_d = {7'b0, prefetch_addr[7:2]};
+                                        ba_d = Mapped_BA;
                                         //bank0 for 0x38000 instruction
                                         //bank1 for 0X38001 input data
                                         //bank2 for 0x38002 output data
-                                        ba_d = Mapped_BA;
-                                        cache_cnt_d[plus8_addr[2]] = 3'd3;
-                                        cache_addr_d[plus8_addr[2]] = prefetch_addr;      
                                     end 
                                 end
                                 else state_d = READ;
@@ -341,15 +342,13 @@ module sdr_controller (
                 data_d = dqi_q; // data_d by pass
                 out_valid_d = 1'b1;
                 state_d = IDLE;
-                
+                //prefetch addr+8 and operate in IDLE state
                 if (ROW_open) begin
+                    cache_cnt_d[prefetch_addr[2]] = 3'd3;
+                    cache_addr_d[prefetch_addr[2]] = prefetch_addr;
                     cmd_d = CMD_READ;
                     a_d ={7'b0, prefetch_addr[7:2]};  
-                    ba_d = Prefetch_BA;
-                    cache_cnt_d[prefetch_addr[2]] = 3'd3;
-            	    //3 2 1 data in 
-                    cache_addr_d[prefetch_addr[2]] = prefetch_addr;
-                    
+                    ba_d = Prefetch_BA;                   
             	 end
             end
 
