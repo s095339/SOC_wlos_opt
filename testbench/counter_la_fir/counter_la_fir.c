@@ -23,6 +23,8 @@
 #include <irq_vex.h>
 #endif
 extern int main_func();
+//extern int * qsort();
+//extern int * matmul();
 // --------------------------------------------------------
 
 /*
@@ -138,8 +140,10 @@ void main()
 		}
 	}
 */	
+	//qsort();
+	//
 	main_func();
-		
+	//int *temp = matmul();
 
 	//print("\n");
 	//print("Monitor: Test 1 Passed\n\n");	// Makes simulation very long!

@@ -2,12 +2,77 @@
 #include <stdint.h> 
 
 
-extern int* matmul();
-extern int* qsort();
+
 int intr_dma = 0;
+//==================
+//qsort===================================================
+
+
+int __attribute__ ( ( section ( ".mprjram" ) ) ) partition(int low,int hi){
+	int pivot = A[hi];
+	int i = low-1,j;
+	int temp;
+	for(j = low;j<hi;j++){
+		if(A[j] < pivot){
+			i = i+1;
+			temp = A[i];
+			A[i] = A[j];
+			A[j] = temp;
+		}
+	}
+	if(A[hi] < A[i+1]){
+		temp = A[i+1];
+		A[i+1] = A[hi];
+		A[hi] = temp;
+	}
+	return i+1;
+}
+
+void __attribute__ ( ( section ( ".mprjram" ) ) ) sort(int low, int hi){
+	if(low < hi){
+		int p = partition(low, hi);
+		sort(low,p-1);
+		sort(p+1,hi);
+	}
+}
+
+int* __attribute__ ( ( section ( ".mprjram" ) ) ) qsort(){
+	sort(0,SIZES-1);
+	return A;
+}
+
+//matmul===================================================
+
+void __attribute__ ( ( section ( ".mprjram" ) ) ) matmul()
+{
+	int i=0;
+	int j;
+	int k;
+	int sum;
+	int kk;
+	unsigned int count = 0;
+	for (i=0; i<SIZE; i++){
+		for (j=0; j<SIZE; j++){
+			sum = 0;
+			for(k = 0;k<SIZE;k++)
+				sum += AA[(i*SIZE) + k] * B[(k*SIZE) + j];
+			result[(i*SIZE) + j] = sum;
+		}
+	}
+	
+}
+
+
+
+
+
+//==================
+
+
 void __attribute__ ((section("mprjram")))isr_dma(){
 	intr_dma = 1;
-	send_wb(0x2600000c, 0xABCD0000);
+	for(int i=0;i<NI; i++)
+		output[i] = outputsignal[i];
 }
 
 void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
@@ -34,7 +99,7 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
 
 
 
-	while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
+	//while( read_wb(WB_FIR_BLK_LVL) & (1<<ap_idle ) != 1<<ap_idle);
 	//int ii=0;
 	//do{
 	//	send_wb(0x2600000c, outputsignal[ii++]<<16);
@@ -45,23 +110,11 @@ void __attribute__ ( ( section ( ".mprjram" ) ) ) fir(){
 
 
 int __attribute__ ( ( section ( ".mprjram" ) ) ) main_func(){
-	
+	qsort();
 	fir();
-	//qsort();
-	//matmul();
-	while(1){
+	matmul();
+	//while(!intr_dma);
 
-		if(intr_dma)break;
-			//intr_dma = 0;
-			//int ii=0;
-			//do{
-			//	send_wb(0x2600000c, outputsignal[ii++]<<16);
-			//}while(ii<NI);
-			
-
-	}
-	for(int i=0;i<NI;i++){
-		send_wb(0x2600000c, outputsignal[i]<<16);
-	}
+	
 	return 0;
 }

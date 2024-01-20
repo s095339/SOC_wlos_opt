@@ -1,6 +1,7 @@
 rm -f counter_la_fir.hex
 
 riscv32-unknown-elf-gcc -Wl,--no-warn-rwx-segments -g \
+	-O2\
 	--save-temps \
 	-Xlinker -Map=output.map \
 	-I../../firmware \
