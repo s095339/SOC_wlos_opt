@@ -20,7 +20,7 @@
 if { [info exists ::env(USER_DESIGN_FILE)] } {
       variable user_design_file $env(USER_DESIGN_FILE)
 } else {
-      variable user_design_file "user_proj_example.counter.v"
+      variable user_design_file "uart.v"
 }
   
 # Check file required for this script exists
@@ -43,9 +43,11 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/$user_design_file"]"\
   "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_tx.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_rx.v"]"\
+ [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/tx_fifo.v"]"\
+ "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/rx_fifo.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_ctrl.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/bram.v"]"\
- "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/user_project_wrapper.v"]"\ 
+ "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/user_proj_wrapper_uart.v"]"\ 
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/header/user_defines.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/header/defines.v"]"\ 
   ]
@@ -211,8 +213,10 @@ set files [list \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/${user_design_file}"] \
  [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_tx.v"]\
  [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_rx.v"]\
+[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/tx_fifo.v"]\
+ [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/rx_fifo.v"]\
  [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_ctrl.v"]\
- [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/user_project_wrapper.v"]\
+ [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/user_proj_wrapper_uart.v"]\
  [file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/bram.v"]\
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/header/user_defines.v"]\
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/header/defines.v"]\
