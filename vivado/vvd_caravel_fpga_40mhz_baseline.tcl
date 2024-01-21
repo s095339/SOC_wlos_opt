@@ -22,7 +22,7 @@ if { [info exists ::env(USER_DESIGN_FILE)] } {
 } else {
       variable user_design_file "uart.v"
 }
-  
+
 # Check file required for this script exists
 proc checkRequiredFiles { origin_dir} {
   set status true  
@@ -43,8 +43,6 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/$user_design_file"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_tx.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_rx.v"]"\
- "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/tx_fifo.v"]"\
- "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/rx_fifo.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/uart_ctrl.v"]"\
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/bram.v"]"\ 
  "[file normalize "$origin_dir/vvd_srcs/caravel_soc/rtl/user/user_proj_wrapper_uart.v"]"\ 
@@ -213,8 +211,6 @@ set files [list \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/${user_design_file}"] \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/uart_tx.v"] \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/uart_rx.v"] \
- [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/tx_fifo.v"] \
- [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/rx_fifo.v"] \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/uart_ctrl.v"] \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/bram.v"] \
  [file normalize "${origin_dir}/vvd_srcs/caravel_soc/rtl/user/user_proj_wrapper_uart.v"] \
@@ -1623,6 +1619,13 @@ set_property -name "run.step" -value "synth_design" -objects $obj
 set_property -name "run.type" -value "synthesis" -objects $obj
 
 # Create 'utilization_2' gadget (if not found)
+if {[string equal [get_dashboard_gadgets  [ list "utilization_2" ] ] ""]} {
+create_dashboard_gadget -name {utilization_2} -type utilization
+}
+set obj [get_dashboard_gadgets [ list "utilization_2" ] ]
+set_property -name "reports" -value "impl_1#impl_1_place_report_utilization_0" -objects $obj
+
+move_dashboard_gadget -name {utilization_1} -row 0 -col 0
 move_dashboard_gadget -name {power_1} -row 1 -col 0
 move_dashboard_gadget -name {drc_1} -row 2 -col 0
 move_dashboard_gadget -name {timing_1} -row 0 -col 1
