@@ -1,10 +1,11 @@
 rm -f counter_la_fir.hex
 
 riscv32-unknown-elf-gcc -Wl,--no-warn-rwx-segments -g \
+	-O2\
 	--save-temps \
 	-Xlinker -Map=output.map \
 	-I../../firmware \
-	-march=rv32i -mabi=ilp32 -D__vexriscv__ \
+	-march=rv32i -mabi=ilp32 -D__vexriscv__ -DUSER_PROJ_IRQ0_EN \
 	-Wl,-Bstatic,-T,../../firmware/sections.lds,--strip-discarded \
 	-ffreestanding -nostartfiles -o counter_la_fir.elf ../../firmware/crt0_vex.S ../../firmware/isr.c fir.c counter_la_fir.c
 # -nostartfiles	

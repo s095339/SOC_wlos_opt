@@ -1,38 +1,25 @@
-# WorkLoad Optimize SOC (WLOS) Baseline
+# SOC Final Project
+team5 
+組員：張耀明、蕭翔、陳佳詳
 
-### Simulation for matrix multiplication
-```sh
-cd ~/caravel-soc_fpga-lab/lab-wlos_baseline/testbench/counter_la_mm
-source run_clean
-source run_sim
-```
 
-### Simulation for FIR
-```sh
-cd ~/caravel-soc_fpga-lab/lab-wlos_baseline/testbench/counter_la_fir
-source run_clean
-source run_sim
-```
+[TOC]
 
-### Simulation for qsort
-```sh
-cd ~/caravel-soc_fpga-lab/lab-wlos_baseline/testbench/counter_la_qs
-source run_clean
-source run_sim
-```
 
-### Simulation for uart
-```sh
-cd ~/caravel-soc_fpga-lab/lab-wlos_baseline/testbench/uart
-source run_clean
-source run_sim
-```
+### 1. Uart acceleration
+Branch: dev-uart
 
-## Verification with Vivado
-### Synthesis and Generate bitstream
-```sh
-cd ~/caravel-soc_fpga-lab/lab-wlos_baseline/vivado
-source run_vivado
-```
+> git fetch origin dev-uart\
+> git checkout dev-uart
+### 2. FIR acceleration
+Branch: develop main
+
+> git fetch origin develop\
+> git checkout develop 
+
+
+
+
+
 
 
