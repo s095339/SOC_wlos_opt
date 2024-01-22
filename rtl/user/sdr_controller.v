@@ -250,7 +250,7 @@ module sdr_controller (
                     ready_d = 1'b0; 
                     rw_op_d = rw; 
                     addr_d = addr;
-                    if (rw) data_d = data_in;
+                    data_d = (rw)?  data_in : (ROW_open && ROW_addr_hit && Prefetch_EN)?cache_q[addr[2]]:data_q;
                     // if the row is open we don't have to activate it
                     if (ROW_open) begin
                         if (ROW_addr_hit) begin //Row hit
@@ -258,7 +258,7 @@ module sdr_controller (
                             else begin
 				                if (Prefetch_EN) begin //cache hit
                                     out_valid_d = 1'b1;
-                                    data_d = cache_q[addr[2]];
+                                    //data_d = cache_q[addr[2]];
                                     //cache 送資料出去給data_d
                                     if (ROW_open) begin
                                         cmd_d = CMD_READ;
